@@ -1,16 +1,32 @@
 # Event Check-In App 📋
 
-A real-time web-based event attendance tracking application with multi-device synchronization using Supabase.
+A real-time web-based event attendance tracking application with multi-device synchronization and role-based access using Supabase.
 
 ## Features
 
-- ✅ **Real-time Sync**: Multiple administrators can use the app simultaneously with instant data synchronization
-- 👥 **Attendee Management**: Add, view, and manage event attendees
+- ✅ **Real-time Sync**: Multiple users can use the app simultaneously with instant data synchronization
+- 🔐 **Role-Based Access**: Separate checker and admin modes with password protection
+- 👥 **Attendee Management**: Add, view, and manage event attendees (Admin only)
 - ⏰ **Check-in Tracking**: Record check-in status with timestamps
-- 🔍 **Search & Filter**: Search attendees by name/email and filter by check-in status
+- 📷 **QR Code Scanning**: Quick check-in using QR codes
+- 🔍 **Search & Filter**: Search attendees by name/email/company and filter by check-in status
 - 📊 **Statistics Dashboard**: View total, checked-in, and not-checked-in counts
-- 📥 **CSV Export**: Export attendee data with status and check-in times
+- 📥 **CSV Import/Export**: Bulk import attendees and export data with status (Admin only)
 - 📱 **Responsive Design**: Works on desktop, tablet, and mobile devices
+
+## Access Modes
+
+### Check-In Mode (/)
+- **URL**: `your-domain.com/`
+- **Access**: Public - no password required
+- **Features**: Check-in/undo, search, view attendee list
+- **Use Case**: For check-in helpers at event entrance
+
+### Admin Mode (/admin)
+- **URL**: `your-domain.com/admin`
+- **Access**: Password protected
+- **Features**: Full access - add/delete attendees, CSV import/export, check-in
+- **Use Case**: For data master managing the attendee list
 
 ## Setup Instructions
 
@@ -20,22 +36,20 @@ A real-time web-based event attendance tracking application with multi-device sy
 npm install
 ```
 
-### 2. Configure Supabase
+### 2. Configure Environment Variables
 
-1. Go to your [Supabase Dashboard](https://app.supabase.com/)
-2. Create a new project or use an existing one
-3. Copy your project URL and anon key
-4. Create a `.env` file in the root directory:
+1. Create a `.env` file in the root directory:
 
 ```bash
 cp .env.example .env
 ```
 
-5. Update the `.env` file with your Supabase credentials:
+2. Update the `.env` file with your credentials:
 
 ```
 VITE_SUPABASE_URL=your_supabase_url_here
 VITE_SUPABASE_ANON_KEY=your_supabase_anon_key_here
+VITE_ADMIN_PASSWORD=your_secure_admin_password
 ```
 
 ### 3. Create the Database Table
@@ -85,35 +99,71 @@ The app will open automatically at `http://localhost:3000`
 5. **Export**: Click "📥 Export CSV" to download the attendee list with check-in data
 6. **Multi-Device**: Open the app on multiple devices - all changes sync instantly!
 
+### Usage Workflow
+
+**Before the Event (Data Master):**
+1. Access `/admin` with password
+2. Upload CSV with attendee list or add manually
+3. Export and verify data
+
+**During the Event:**
+1. Check-in helpers use `/` (no password needed)
+2. Data master monitors `/admin` for issues
+3. All changes sync in real-time
+
+**After the Event:**
+1. Data master exports final CSV from `/admin`
+2. Review check-in data and timestamps
+
 ### CSV Export Format
 
 The exported CSV includes:
 - Name
 - Email
+- Company
 - Status (Checked In / Not Checked In)
 - Check-in Time (timestamp in YYYY-MM-DD HH:MM:SS format)
+
+## Deployment to Vercel
+
+1. Push code to GitHub
+2. Import project in Vercel
+3. Add environment variables in Vercel:
+   - `VITE_SUPABASE_URL`
+   - `VITE_SUPABASE_ANON_KEY`
+   - `VITE_ADMIN_PASSWORD` (use a strong password for production)
+4. Deploy!
+
+**URLs after deployment:**
+- Check-in mode: `your-app.vercel.app/`
+- Admin login: `your-app.vercel.app/admin/login`
+- Admin panel: `your-app.vercel.app/admin`
 
 ## Tech Stack
 
 - **Frontend**: React 18 with Vite
+- **Routing**: React Router v6
 - **Database & Real-time**: Supabase
 - **Styling**: Custom CSS with responsive design
 - **Date Handling**: date-fns
+- **QR Scanning**: html5-qrcode
 
 ## Security Notes
 
-The current setup uses a permissive RLS policy for demonstration. For production:
-
-1. Implement proper authentication
-2. Update RLS policies to restrict access based on user roles
-3. Add admin user management
-4. Consider adding event management (multiple events)
+- Admin password is stored in environment variable (not in code)
+- Session-based admin authentication (clears on browser close)
+- `.env` file is git-ignored to protect credentials
+- For production: Use strong admin password and consider Supabase Auth for better security
 
 ## Troubleshooting
 
 **"Missing Supabase credentials" error**: Make sure your `.env` file exists and contains valid credentials.
 
 **Real-time not working**: Ensure you've enabled real-time for the `attendees` table in Supabase.
+
+**Can't access admin panel**: Make sure `VITE_ADMIN_PASSWORD` is set in your environment variables.
+
+**QR scanner not working**: Ensure HTTPS is enabled (required for camera access) and camera permissions are granted.
 
 **Connection errors**: Check that your Supabase project is active and the URL/keys are correct.
 
