@@ -56,7 +56,6 @@ function CheckerView({ attendees, toggleCheckIn, deleteAttendee, stats, startQRS
         )}
         {scannerError && <p className="error-message">{scannerError}</p>}
         <p className="scanner-note">
-          Scan attendee QR code
         </p>
       </div>
 
