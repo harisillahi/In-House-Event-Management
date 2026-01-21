@@ -232,19 +232,13 @@
   }
 
   .event-display h2 {
-    font-size: 1.4rem;
-    margin: 0 0 0.75rem 0;
-  }
-
-  .event-display .presenter,
-  .event-display .location,
-  .event-display .time {
-    display: none;
+    font-size: 1.1rem;
+    margin: 0 0 0.5rem 0;
   }
 
   .event-display .countdown {
-    font-size: 1.15rem;
-    margin: 0.75rem 0 0 0;
+    font-size: 1rem;
+    margin: 0.5rem 0 0 0;
     min-width: auto;
   }
 
