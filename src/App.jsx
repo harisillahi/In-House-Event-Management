@@ -1,11 +1,13 @@
-import { useState, useEffect, useRef } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
-import { supabase } from './supabaseClient'
-import { format } from 'date-fns'
-import { Html5Qrcode } from 'html5-qrcode'
-import CheckerView from './components/CheckerView'
-import AdminView from './components/AdminView'
+import Home from './components/Home'
+import Login from './components/Login'
+import ProtectedRoute from './components/ProtectedRoute'
+import Registration from './components/Registration'
+import EventManagement from './components/EventManagement'
+import Admin from './components/Admin'
 import AdminLogin from './components/AdminLogin'
+import AdminView from './components/AdminView'
+import CheckerView from './components/CheckerView'
 import './App.css'
 
 function ProtectedAdminRoute({ children }) {
@@ -14,432 +16,36 @@ function ProtectedAdminRoute({ children }) {
 }
 
 function App() {
-  const [attendees, setAttendees] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [newAttendeeName, setNewAttendeeName] = useState('')
-  const [newAttendeeEmail, setNewAttendeeEmail] = useState('')
-  const [newAttendeeCompany, setNewAttendeeCompany] = useState('')
-  const [importing, setImporting] = useState(false)
-  const [showScanner, setShowScanner] = useState(false)
-  const [scannerError, setScannerError] = useState('')
-  const [showModal, setShowModal] = useState(false)
-  const [modalMessage, setModalMessage] = useState('')
-  const html5QrCodeRef = useRef(null)
-
-  useEffect(() => {
-    fetchAttendees()
-    
-    const channel = supabase
-      .channel('attendees_changes')
-      .on('postgres_changes', 
-        { event: '*', schema: 'public', table: 'attendees' },
-        (payload) => {
-          console.log('Change received!', payload)
-          fetchAttendees()
-        }
-      )
-      .subscribe()
-
-    return () => {
-      supabase.removeChannel(channel)
-    }
-  }, [])
-
-  const fetchAttendees = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('attendees')
-        .select('*')
-        .order('name', { ascending: true })
-
-      if (error) throw error
-      setAttendees(data || [])
-    } catch (error) {
-      console.error('Error fetching attendees:', error.message)
-      alert('Error loading attendees. Please check your Supabase connection.')
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const addAttendee = async (e) => {
-    e.preventDefault()
-    if (!newAttendeeName.trim()) return
-
-    try {
-      const nameToCheck = newAttendeeName.trim().toLowerCase()
-      const emailToCheck = newAttendeeEmail.trim().toLowerCase()
-      
-      const duplicate = attendees.find(a => {
-        const existingName = a.name.toLowerCase()
-        const existingEmail = a.email ? a.email.toLowerCase() : ''
-        
-        if (emailToCheck && existingEmail && emailToCheck === existingEmail) {
-          return true
-        }
-        if (!emailToCheck && nameToCheck === existingName) {
-          return true
-        }
-        return false
-      })
-
-      if (duplicate) {
-        setModalMessage(`Attendee already exists:\n\n${duplicate.name}${duplicate.email ? '\n' + duplicate.email : ''}${duplicate.company ? '\n' + duplicate.company : ''}`)
-        setShowModal(true)
-        return
-      }
-
-      const { error } = await supabase
-        .from('attendees')
-        .insert([
-          { 
-            name: newAttendeeName.trim(), 
-            email: newAttendeeEmail.trim() || null,
-            company: newAttendeeCompany.trim() || null,
-            checked_in: false,
-            check_in_time: null
-          }
-        ])
-
-      if (error) throw error
-      
-      setNewAttendeeName('')
-      setNewAttendeeEmail('')
-      setNewAttendeeCompany('')
-      fetchAttendees()
-    } catch (error) {
-      console.error('Error adding attendee:', error.message)
-      alert('Error adding attendee: ' + error.message)
-    }
-  }
-
-  const toggleCheckIn = async (id, currentStatus, currentTime) => {
-    try {
-      const newStatus = !currentStatus
-      const { error } = await supabase
-        .from('attendees')
-        .update({ 
-          checked_in: newStatus,
-          check_in_time: newStatus ? new Date().toISOString() : null
-        })
-        .eq('id', id)
-
-      if (error) throw error
-      fetchAttendees()
-    } catch (error) {
-      console.error('Error updating check-in:', error.message)
-      alert('Error updating check-in')
-    }
-  }
-
-  const deleteAttendee = async (id) => {
-    if (!confirm('Are you sure you want to delete this attendee?')) return
-
-    try {
-      const { error } = await supabase
-        .from('attendees')
-        .delete()
-        .eq('id', id)
-
-      if (error) throw error
-      fetchAttendees()
-    } catch (error) {
-      console.error('Error deleting attendee:', error.message)
-      alert('Error deleting attendee')
-    }
-  }
-
-  const importFromCSV = async (event) => {
-    const file = event.target.files[0]
-    if (!file) return
-
-    setImporting(true)
-    const reader = new FileReader()
-    
-    reader.onload = async (e) => {
-      try {
-        const text = e.target.result
-        const lines = text.split('\n').filter(line => line.trim())
-        
-        const dataLines = lines.slice(1)
-        const attendeesToImport = []
-
-        for (const line of dataLines) {
-          const matches = line.match(/(".*?"|[^,]+)(?=\s*,|\s*$)/g)
-          if (!matches || matches.length < 1) continue
-
-          const name = matches[0].replace(/^"|"$/g, '').trim()
-          const email = matches[1] ? matches[1].replace(/^"|"$/g, '').trim() : ''
-          const company = matches[2] ? matches[2].replace(/^"|"$/g, '').trim() : ''
-          
-          if (name) {
-            attendeesToImport.push({
-              name,
-              email: email || null,
-              company: company || null,
-              checked_in: false,
-              check_in_time: null
-            })
-          }
-        }
-
-        if (attendeesToImport.length === 0) {
-          alert('No valid attendees found in CSV. Make sure it has Name, Email, and Company columns.')
-          setImporting(false)
-          return
-        }
-
-        const uniqueAttendees = []
-        const skipped = []
-        
-        for (const newAttendee of attendeesToImport) {
-          const nameToCheck = newAttendee.name.toLowerCase()
-          const emailToCheck = newAttendee.email ? newAttendee.email.toLowerCase() : ''
-          
-          const duplicate = attendees.find(a => {
-            const existingName = a.name.toLowerCase()
-            const existingEmail = a.email ? a.email.toLowerCase() : ''
-            
-            if (emailToCheck && existingEmail && emailToCheck === existingEmail) {
-              return true
-            }
-            if (!emailToCheck && nameToCheck === existingName) {
-              return true
-            }
-            return false
-          })
-
-          if (duplicate) {
-            skipped.push(newAttendee.name)
-          } else {
-            uniqueAttendees.push(newAttendee)
-          }
-        }
-
-        if (uniqueAttendees.length === 0) {
-          alert('All attendees in the CSV already exist in the database.')
-          setImporting(false)
-          event.target.value = ''
-          return
-        }
-
-        const { error } = await supabase
-          .from('attendees')
-          .insert(uniqueAttendees)
-
-        if (error) throw error
-
-        let message = `Successfully imported ${uniqueAttendees.length} attendees!`
-        if (skipped.length > 0) {
-          message += `\n\nSkipped ${skipped.length} duplicate(s): ${skipped.slice(0, 5).join(', ')}${skipped.length > 5 ? '...' : ''}`
-        }
-        alert(message)
-        fetchAttendees()
-      } catch (error) {
-        console.error('Error importing CSV:', error)
-        alert('Error importing CSV: ' + error.message)
-      } finally {
-        setImporting(false)
-        event.target.value = ''
-      }
-    }
-
-    reader.readAsText(file)
-  }
-
-  const exportToCSV = () => {
-    const csvContent = [
-      ['Name', 'Email', 'Company', 'Status', 'Check-In Time'],
-      ...attendees.map(a => [
-        a.name,
-        a.email || '',
-        a.company || '',
-        a.checked_in ? 'Checked In' : 'Not Checked In',
-        a.checked_in && a.check_in_time ? format(new Date(a.check_in_time), 'yyyy-MM-dd HH:mm:ss') : ''
-      ])
-    ].map(row => row.join(',')).join('\n')
-
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
-    const link = document.createElement('a')
-    const url = URL.createObjectURL(blob)
-    link.setAttribute('href', url)
-    link.setAttribute('download', `event-checkin-${format(new Date(), 'yyyy-MM-dd-HHmm')}.csv`)
-    link.style.visibility = 'hidden'
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
-  }
-
-  const downloadTemplate = () => {
-    const csvContent = 'Name,Email,Company\nJohn Doe,john@example.com,ABC Corp\nJane Smith,jane@example.com,XYZ Inc'
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
-    const link = document.createElement('a')
-    const url = URL.createObjectURL(blob)
-    link.setAttribute('href', url)
-    link.setAttribute('download', 'attendees-template.csv')
-    link.style.visibility = 'hidden'
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
-  }
-
-  const startQRScanner = async () => {
-    try {
-      setScannerError('')
-      setShowScanner(true)
-      
-      await new Promise(resolve => setTimeout(resolve, 100))
-      
-      if (!html5QrCodeRef.current) {
-        html5QrCodeRef.current = new Html5Qrcode("qr-reader")
-      }
-
-      await html5QrCodeRef.current.start(
-        { facingMode: "environment" },
-        {
-          fps: 10,
-          qrbox: { width: 250, height: 250 }
-        },
-        onScanSuccess,
-        onScanError
-      )
-    } catch (err) {
-      console.error('Error starting scanner:', err)
-      setScannerError('Could not access camera. Please check permissions.')
-      setShowScanner(false)
-    }
-  }
-
-  const stopQRScanner = async () => {
-    try {
-      if (html5QrCodeRef.current && html5QrCodeRef.current.isScanning) {
-        await html5QrCodeRef.current.stop()
-      }
-    } catch (err) {
-      console.error('Error stopping scanner:', err)
-    }
-    setShowScanner(false)
-    setScannerError('')
-  }
-
-  const onScanSuccess = async (decodedText) => {
-    try {
-      await stopQRScanner()
-      
-      const matchedAttendee = attendees.find(a => 
-        a.email?.toLowerCase() === decodedText.toLowerCase() ||
-        a.name.toLowerCase() === decodedText.toLowerCase() ||
-        a.id === decodedText
-      )
-
-      if (matchedAttendee) {
-        if (matchedAttendee.checked_in) {
-          alert(`${matchedAttendee.name} is already checked in!`)
-        } else {
-          await toggleCheckIn(matchedAttendee.id, true, new Date().toISOString())
-          alert(`✓ ${matchedAttendee.name} checked in successfully!`)
-        }
-      } else {
-        alert(`Attendee not found. Scanned: ${decodedText}`)
-      }
-    } catch (err) {
-      console.error('Error processing scan:', err)
-      alert('Error processing QR code')
-    }
-  }
-
-  const onScanError = (errorMessage) => {
-    // Ignore scanning errors
-  }
-
-  useEffect(() => {
-    return () => {
-      if (html5QrCodeRef.current && html5QrCodeRef.current.isScanning) {
-        html5QrCodeRef.current.stop().catch(console.error)
-      }
-    }
-  }, [])
-
-  const stats = {
-    total: attendees.length,
-    checkedIn: attendees.filter(a => a.checked_in).length,
-    notCheckedIn: attendees.filter(a => !a.checked_in).length
-  }
-
-  if (loading) {
-    return (
-      <div className="container">
-        <div className="loading">Loading...</div>
-      </div>
-    )
-  }
-
   return (
     <BrowserRouter>
       <Routes>
-        <Route 
-          path="/" 
-          element={
-            <CheckerView
-              attendees={attendees}
-              toggleCheckIn={toggleCheckIn}
-              deleteAttendee={deleteAttendee}
-              stats={stats}
-              startQRScanner={startQRScanner}
-              stopQRScanner={stopQRScanner}
-              showScanner={showScanner}
-              scannerError={scannerError}
-            />
-          } 
-        />
-        <Route path="/admin/login" element={<AdminLogin />} />
-        <Route 
-          path="/admin" 
-          element={
-            <ProtectedAdminRoute>
-              <AdminView
-                attendees={attendees}
-                toggleCheckIn={toggleCheckIn}
-                deleteAttendee={deleteAttendee}
-                stats={stats}
-                addAttendee={addAttendee}
-                newAttendeeName={newAttendeeName}
-                setNewAttendeeName={setNewAttendeeName}
-                newAttendeeEmail={newAttendeeEmail}
-                setNewAttendeeEmail={setNewAttendeeEmail}
-                newAttendeeCompany={newAttendeeCompany}
-                setNewAttendeeCompany={setNewAttendeeCompany}
-                importFromCSV={importFromCSV}
-                importing={importing}
-                exportToCSV={exportToCSV}
-                downloadTemplate={downloadTemplate}
-                startQRScanner={startQRScanner}
-                stopQRScanner={stopQRScanner}
-                showScanner={showScanner}
-                scannerError={scannerError}
-              />
-            </ProtectedAdminRoute>
-          } 
-        />
+        <Route path="/" element={<Home />} />
+        <Route path="/registration/login" element={<Login />} />
+        <Route path="/registration" element={
+          <ProtectedRoute type="registration">
+            <Registration />
+          </ProtectedRoute>
+        } />
+        <Route path="/event/login" element={<Login />} />
+        <Route path="/event" element={
+          <ProtectedRoute type="event">
+            <EventManagement />
+          </ProtectedRoute>
+        } />
+        <Route path="/admin/login" element={<Login />} />
+        <Route path="/admin" element={
+          <ProtectedRoute type="admin">
+            <Admin />
+          </ProtectedRoute>
+        } />
+        <Route path="/admin/old/login" element={<AdminLogin />} />
+        <Route path="/admin" element={
+          <ProtectedAdminRoute>
+            <AdminView />
+          </ProtectedAdminRoute>
+        } />
+        <Route path="/checker" element={<CheckerView />} />
       </Routes>
-
-      {showModal && (
-        <div className="modal-overlay" onClick={() => setShowModal(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <h3>Duplicate Attendee</h3>
-            </div>
-            <div className="modal-body">
-              <p>{modalMessage}</p>
-            </div>
-            <div className="modal-footer">
-              <button onClick={() => setShowModal(false)} className="btn btn-primary">
-                OK
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </BrowserRouter>
   )
 }

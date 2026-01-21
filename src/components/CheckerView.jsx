@@ -1,9 +1,132 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { format } from 'date-fns'
+import { Html5Qrcode } from 'html5-qrcode'
+import { supabase } from '../supabaseClient'
 
-function CheckerView({ attendees, toggleCheckIn, deleteAttendee, stats, startQRScanner, stopQRScanner, showScanner, scannerError }) {
+function CheckerView() {
+  const [attendees, setAttendees] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [showScanner, setShowScanner] = useState(false)
+  const [scannerError, setScannerError] = useState('')
+  const html5QrCodeRef = useRef(null)
   const [searchTerm, setSearchTerm] = useState('')
   const [filter, setFilter] = useState('all')
+
+  useEffect(() => {
+    fetchAttendees()
+    
+    const channel = supabase
+      .channel('attendees_changes')
+      .on('postgres_changes', 
+        { event: '*', schema: 'public', table: 'attendees' },
+        (payload) => {
+          console.log('Change received!', payload)
+          fetchAttendees()
+        }
+      )
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [])
+
+  const fetchAttendees = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('attendees')
+        .select('*')
+        .order('created_at', { ascending: false })
+      
+      if (error) throw error
+      setAttendees(data || [])
+    } catch (error) {
+      console.error('Error fetching attendees:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const toggleCheckIn = async (id, currentStatus) => {
+    try {
+      const { error } = await supabase
+        .from('attendees')
+        .update({ checked_in: !currentStatus })
+        .eq('id', id)
+
+      if (error) throw error
+      // fetchAttendees() will be called via real-time subscription
+    } catch (error) {
+      console.error('Error updating check-in status:', error)
+    }
+  }
+
+  const startQRScanner = async () => {
+    try {
+      if (!html5QrCodeRef.current) {
+        html5QrCodeRef.current = new Html5Qrcode('qr-reader')
+      }
+      
+      setScannerError('')
+      setShowScanner(true)
+      
+      const config = {
+        fps: 10,
+        qrbox: { width: 250, height: 250 },
+        aspectRatio: 1.0
+      }
+      
+      await html5QrCodeRef.current.start(
+        { facingMode: 'environment' },
+        config,
+        async (decodedText) => {
+          try {
+            const email = decodedText.trim()
+            const { data, error } = await supabase
+              .from('attendees')
+              .update({ checked_in: true })
+              .eq('email', email)
+              .select()
+            
+            if (error) throw error
+            
+            if (data && data.length > 0) {
+              alert(`Checked in: ${data[0].name}`)
+            } else {
+              alert('Attendee not found')
+            }
+          } catch (error) {
+            console.error('Error checking in attendee:', error)
+            alert('Error checking in attendee')
+          }
+        },
+        (errorMessage) => {
+          // Ignore scan errors, they're normal
+        }
+      )
+    } catch (error) {
+      console.error('Error starting scanner:', error)
+      setScannerError('Failed to start camera. Please check permissions.')
+    }
+  }
+
+  const stopQRScanner = async () => {
+    try {
+      if (html5QrCodeRef.current) {
+        await html5QrCodeRef.current.stop()
+        html5QrCodeRef.current = null
+      }
+      setShowScanner(false)
+      setScannerError('')
+    } catch (error) {
+      console.error('Error stopping scanner:', error)
+    }
+  }
+
+  const checkedInCount = attendees.filter(a => a.checked_in).length
+  const totalCount = attendees.length
+  const notCheckedInCount = totalCount - checkedInCount
+  const stats = { checkedIn: checkedInCount, total: totalCount, notCheckedIn: notCheckedInCount }
 
   const filteredAttendees = attendees.filter(attendee => {
     const matchesSearch = attendee.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -14,6 +137,10 @@ function CheckerView({ attendees, toggleCheckIn, deleteAttendee, stats, startQRS
     if (filter === 'not-checked-in') return matchesSearch && !attendee.checked_in
     return matchesSearch
   })
+
+  if (loading) {
+    return <div className="loading">Loading...</div>
+  }
 
   return (
     <div className="container">

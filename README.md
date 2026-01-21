@@ -1,32 +1,36 @@
-# Event Check-In App 📋
+# Event Management System
 
-A real-time web-based event attendance tracking application with multi-device synchronization and role-based access using Supabase.
+A real-time web-based application for managing event registrations and event rundowns with multi-device synchronization using Supabase.
 
 ## Features
 
-- ✅ **Real-time Sync**: Multiple users can use the app simultaneously with instant data synchronization
-- 🔐 **Role-Based Access**: Separate checker and admin modes with password protection
-- 👥 **Attendee Management**: Add, view, and manage event attendees (Admin only)
-- ⏰ **Check-in Tracking**: Record check-in status with timestamps
-- 📷 **QR Code Scanning**: Quick check-in using QR codes
-- 🔍 **Search & Filter**: Search attendees by name/email/company and filter by check-in status
-- 📊 **Statistics Dashboard**: View total, checked-in, and not-checked-in counts
-- 📥 **CSV Import/Export**: Bulk import attendees and export data with status (Admin only)
-- 📱 **Responsive Design**: Works on desktop, tablet, and mobile devices
+### Registration Management
+- Real-time attendee registration with multi-device sync
+- QR code check-in system
+- CSV import/export functionality
+- Search and filter attendees
+- Check-in tracking with timestamps
+- Statistics dashboard
 
-## Access Modes
+### Event Management
+- Event rundown and scheduling
+- Real-time event status tracking (scheduled, in progress, completed)
+- Event cueing system with reordering
+- Start/stop/complete event controls
+- Event details: title, description, presenter, location, times
+- Color coding for events
+- Search and filter events by status
+- Multi-device synchronization
 
-### Check-In Mode (/)
-- **URL**: `your-domain.com/`
-- **Access**: Public - no password required
-- **Features**: Check-in/undo, search, view attendee list
-- **Use Case**: For check-in helpers at event entrance
+## Access
 
-### Admin Mode (/admin)
-- **URL**: `your-domain.com/admin`
-- **Access**: Password protected
-- **Features**: Full access - add/delete attendees, CSV import/export, check-in
-- **Use Case**: For data master managing the attendee list
+The application has two password-protected sections:
+
+1. **Registration** (password: `registration123`)
+   - Manage attendees and check-ins
+   
+2. **Event Management** (password: `event123`)
+   - Manage event schedules and rundowns
 
 ## Setup Instructions
 
@@ -49,12 +53,13 @@ cp .env.example .env
 ```
 VITE_SUPABASE_URL=your_supabase_url_here
 VITE_SUPABASE_ANON_KEY=your_supabase_anon_key_here
-VITE_ADMIN_PASSWORD=your_secure_admin_password
 ```
 
-### 3. Create the Database Table
+### 3. Create the Database Tables
 
-Run this SQL in your Supabase SQL Editor:
+#### Attendees Table
+
+Run this SQL in your Supabase SQL Editor (or use SUPABASE_SETUP.md):
 
 ```sql
 -- Create attendees table
@@ -62,6 +67,7 @@ CREATE TABLE attendees (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   name TEXT NOT NULL,
   email TEXT,
+  company TEXT,
   checked_in BOOLEAN DEFAULT false,
   check_in_time TIMESTAMPTZ,
   created_at TIMESTAMPTZ DEFAULT NOW()
@@ -70,83 +76,128 @@ CREATE TABLE attendees (
 -- Enable Row Level Security
 ALTER TABLE attendees ENABLE ROW LEVEL SECURITY;
 
--- Create policy to allow all operations (adjust based on your security needs)
+-- Create policy to allow all operations
 CREATE POLICY "Enable all operations for all users" ON attendees
   FOR ALL
   USING (true)
   WITH CHECK (true);
-
--- Enable real-time
-ALTER PUBLICATION supabase_realtime ADD TABLE attendees;
 ```
 
-### 4. Run the App
+#### Events Table
+
+Run this SQL in your Supabase SQL Editor (or use SUPABASE_EVENT_SETUP.md):
+
+```sql
+-- Create events table
+CREATE TABLE IF NOT EXISTS public.events (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  title TEXT NOT NULL,
+  description TEXT,
+  start_time TIMESTAMPTZ NOT NULL,
+  end_time TIMESTAMPTZ NOT NULL,
+  duration INTEGER,
+  status TEXT DEFAULT 'scheduled',
+  cue_order INTEGER NOT NULL,
+  color TEXT DEFAULT '#007bff',
+  presenter TEXT,
+  location TEXT,
+  notes TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS events_cue_order_idx ON public.events(cue_order);
+
+ALTER TABLE public.events ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Enable all access for events" ON public.events
+  FOR ALL
+  USING (true)
+  WITH CHECK (true);
+```
+
+### 4. Enable Realtime in Supabase
+
+1. Go to Database → Replication in your Supabase dashboard
+2. Enable replication for both `attendees` and `events` tables
+
+### 5. Run the App
 
 ```bash
 npm run dev
 ```
 
-The app will open automatically at `http://localhost:3000`
+The app will open automatically at `http://localhost:5173`
 
 ## Usage
 
-### For Administrators
+### Registration Section
 
-1. **Add Attendees**: Enter name and optional email, then click "Add Attendee"
-2. **Check In**: Click the "✓ Check In" button when an attendee arrives
+1. **Add Attendees**: Enter name, email, and company
+2. **Check In**: Click "Check In" when attendees arrive
 3. **Search**: Use the search bar to quickly find attendees
 4. **Filter**: View all, checked-in, or not-checked-in attendees
-5. **Export**: Click "📥 Export CSV" to download the attendee list with check-in data
-6. **Multi-Device**: Open the app on multiple devices - all changes sync instantly!
+5. **CSV Import/Export**: Import attendee lists or export data
+6. **QR Code Scanning**: Scan QR codes for quick check-in
 
-### Usage Workflow
+### Event Management Section
 
-**Before the Event (Data Master):**
-1. Access `/admin` with password
-2. Upload CSV with attendee list or add manually
-3. Export and verify data
+1. **Add Events**: Click "Show Add Event Form" and fill in event details
+2. **Schedule Events**: Set start time, end time, presenter, and location
+3. **Reorder Events**: Use up/down arrows to change event order in the rundown
+4. **Start Events**: Click "Start" when an event begins
+5. **Complete Events**: Click "Complete" when an event finishes
+6. **Edit Events**: Click "Edit" to modify event details
+7. **Filter Events**: View all, scheduled, in-progress, or completed events
 
-**During the Event:**
-1. Check-in helpers use `/` (no password needed)
-2. Data master monitors `/admin` for issues
-3. All changes sync in real-time
+## Technology Stack
 
-**After the Event:**
-1. Data master exports final CSV from `/admin`
-2. Review check-in data and timestamps
+- **Frontend**: React 18 with Vite
+- **Database**: Supabase (PostgreSQL)
+- **Real-time Sync**: Supabase Realtime
+- **Styling**: CSS with responsive design
+- **QR Scanning**: html5-qrcode
+- **Date Formatting**: date-fns
 
-### CSV Export Format
+## Project Structure
 
-The exported CSV includes:
-- Name
-- Email
-- Company
-- Status (Checked In / Not Checked In)
-- Check-in Time (timestamp in YYYY-MM-DD HH:MM:SS format)
+```
+EventCheckIn/
+├── src/
+│   ├── components/
+│   │   ├── Home.jsx              # Landing page with menu
+│   │   ├── Login.jsx              # Password authentication
+│   │   ├── ProtectedRoute.jsx    # Route protection
+│   │   ├── Registration.jsx      # Attendee management
+│   │   ├── EventManagement.jsx   # Event rundown system
+│   │   └── *.css                 # Component styles
+│   ├── App.jsx                   # Main router
+│   ├── supabaseClient.js         # Supabase configuration
+│   └── main.jsx                  # Entry point
+├── SUPABASE_SETUP.md             # Attendees table setup
+├── SUPABASE_EVENT_SETUP.md       # Events table setup
+└── README.md                     # Documentation
+```
 
-## Deployment to Vercel
+## Real-time Synchronization
+
+All changes in both Registration and Event Management sections sync instantly across all devices using Supabase Realtime. Multiple users can work simultaneously without conflicts.
+
+## Deployment
+
+### Deploy to Vercel
 
 1. Push code to GitHub
 2. Import project in Vercel
-3. Add environment variables in Vercel:
+3. Add environment variables:
    - `VITE_SUPABASE_URL`
    - `VITE_SUPABASE_ANON_KEY`
-   - `VITE_ADMIN_PASSWORD` (use a strong password for production)
-4. Deploy!
+4. Deploy
 
-**URLs after deployment:**
-- Check-in mode: `your-app.vercel.app/`
-- Admin login: `your-app.vercel.app/admin/login`
-- Admin panel: `your-app.vercel.app/admin`
+## License
 
-## Tech Stack
+MIT
 
-- **Frontend**: React 18 with Vite
-- **Routing**: React Router v6
-- **Database & Real-time**: Supabase
-- **Styling**: Custom CSS with responsive design
-- **Date Handling**: date-fns
-- **QR Scanning**: html5-qrcode
 
 ## Security Notes
 

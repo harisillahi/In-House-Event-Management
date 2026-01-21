@@ -1,23 +1,21 @@
 import { useState, useEffect, useRef } from 'react'
+import { supabase } from '../supabaseClient'
 import { format } from 'date-fns'
 import { Html5Qrcode } from 'html5-qrcode'
-import { supabase } from '../supabaseClient'
+import '../App.css'
 
-function AdminView() {
+function Registration() {
   const [attendees, setAttendees] = useState([])
   const [loading, setLoading] = useState(true)
   const [newAttendeeName, setNewAttendeeName] = useState('')
   const [newAttendeeEmail, setNewAttendeeEmail] = useState('')
   const [newAttendeeCompany, setNewAttendeeCompany] = useState('')
-  const [importing, setImporting] = useState(false)
   const [showScanner, setShowScanner] = useState(false)
   const [scannerError, setScannerError] = useState('')
   const [showModal, setShowModal] = useState(false)
   const [modalMessage, setModalMessage] = useState('')
+  const [showAddModal, setShowAddModal] = useState(false)
   const html5QrCodeRef = useRef(null)
-  const [searchTerm, setSearchTerm] = useState('')
-  const [filter, setFilter] = useState('all')
-  const [showImport, setShowImport] = useState(false)
 
   useEffect(() => {
     fetchAttendees()
@@ -81,6 +79,7 @@ function AdminView() {
         setNewAttendeeName('')
         setNewAttendeeEmail('')
         setNewAttendeeCompany('')
+        setShowAddModal(false)
         // fetchAttendees() will be called via real-time subscription
       }
     } catch (error) {
@@ -91,9 +90,14 @@ function AdminView() {
 
   const toggleCheckIn = async (id, currentStatus) => {
     try {
+      const updates = {
+        checked_in: !currentStatus,
+        check_in_time: !currentStatus ? new Date().toISOString() : null
+      }
+      
       const { error } = await supabase
         .from('attendees')
-        .update({ checked_in: !currentStatus })
+        .update(updates)
         .eq('id', id)
 
       if (error) throw error
@@ -119,105 +123,25 @@ function AdminView() {
     }
   }
 
-  const importFromCSV = async (event) => {
-    const file = event.target.files[0]
-    if (!file) return
-
-    setImporting(true)
-    const reader = new FileReader()
-    
-    reader.onload = async (e) => {
-      try {
-        const csv = e.target.result
-        const lines = csv.split('\n').filter(line => line.trim())
-        const headers = lines[0].split(',').map(h => h.trim().toLowerCase())
-        
-        const nameIndex = headers.indexOf('name')
-        const emailIndex = headers.indexOf('email')
-        const companyIndex = headers.indexOf('company')
-        
-        if (nameIndex === -1 || emailIndex === -1) {
-          alert('CSV must contain "name" and "email" columns')
-          return
-        }
-
-        const attendeesToInsert = []
-        for (let i = 1; i < lines.length; i++) {
-          const values = lines[i].split(',').map(v => v.trim())
-          if (values.length > Math.max(nameIndex, emailIndex)) {
-            attendeesToInsert.push({
-              name: values[nameIndex],
-              email: values[emailIndex],
-              company: companyIndex !== -1 ? values[companyIndex] : null
-            })
-          }
-        }
-
-        const { error } = await supabase
-          .from('attendees')
-          .insert(attendeesToInsert)
-
-        if (error) throw error
-        
-        alert(`Successfully imported ${attendeesToInsert.length} attendees`)
-        event.target.value = ''
-        // fetchAttendees() will be called via real-time subscription
-      } catch (error) {
-        console.error('Error importing CSV:', error)
-        alert('Error importing CSV. Please check the format and try again.')
-      } finally {
-        setImporting(false)
-      }
-    }
-    
-    reader.readAsText(file)
-  }
-
-  const exportToCSV = () => {
-    const headers = ['Name', 'Email', 'Company', 'Checked In', 'Created At']
-    const csvContent = [
-      headers.join(','),
-      ...attendees.map(attendee => [
-        `"${attendee.name}"`,
-        `"${attendee.email}"`,
-        `"${attendee.company || ''}"`,
-        attendee.checked_in ? 'Yes' : 'No',
-        `"${format(new Date(attendee.created_at), 'yyyy-MM-dd HH:mm:ss')}"`
-      ].join(','))
-    ].join('\n')
-    
-    const blob = new Blob([csvContent], { type: 'text/csv' })
-    const url = window.URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = 'attendees.csv'
-    a.click()
-    window.URL.revokeObjectURL(url)
-  }
-
-  const downloadTemplate = () => {
-    const csvContent = 'Name,Email,Company\nJohn Doe,john@example.com,Company Inc.\nJane Smith,jane@example.com,Another Company'
-    const blob = new Blob([csvContent], { type: 'text/csv' })
-    const url = window.URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = 'attendees_template.csv'
-    a.click()
-    window.URL.revokeObjectURL(url)
-  }
-
   const startQRScanner = async () => {
     try {
+      setScannerError('')
+      setShowScanner(true)
+      
+      // Wait for modal to render
+      await new Promise(resolve => setTimeout(resolve, 100))
+      
       if (!html5QrCodeRef.current) {
         html5QrCodeRef.current = new Html5Qrcode('qr-reader')
       }
       
-      setScannerError('')
-      setShowScanner(true)
-      
       const config = {
         fps: 10,
-        qrbox: { width: 250, height: 250 },
+        qrbox: (viewfinderWidth, viewfinderHeight) => {
+          const minEdge = Math.min(viewfinderWidth, viewfinderHeight)
+          const qrboxSize = Math.floor(minEdge * 0.7)
+          return { width: qrboxSize, height: qrboxSize }
+        },
         aspectRatio: 1.0
       }
       
@@ -268,9 +192,32 @@ function AdminView() {
     }
   }
 
+  const [searchTerm, setSearchTerm] = useState('')
+  const [filter, setFilter] = useState('all')
+  const [showImport, setShowImport] = useState(false)
+
   const checkedInCount = attendees.filter(a => a.checked_in).length
   const totalCount = attendees.length
-  const stats = { checkedIn: checkedInCount, total: totalCount }
+  const notCheckedInCount = totalCount - checkedInCount
+  const stats = { total: totalCount, checkedIn: checkedInCount, notCheckedIn: notCheckedInCount }
+
+  const filteredAttendees = attendees.filter(attendee => {
+    const matchesSearch = attendee.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                          (attendee.email && attendee.email.toLowerCase().includes(searchTerm.toLowerCase())) ||
+                          (attendee.company && attendee.company.toLowerCase().includes(searchTerm.toLowerCase()))
+    
+    if (filter === 'checked-in') return matchesSearch && attendee.checked_in
+    if (filter === 'not-checked-in') return matchesSearch && !attendee.checked_in
+    return matchesSearch
+  })
+
+  if (loading) {
+    return (
+      <div className="container">
+        <div className="loading">Loading...</div>
+      </div>
+    )
+  }
 
   return (
     <div className="container">
@@ -278,7 +225,7 @@ function AdminView() {
         <div className="header-content">
           <div className="header-text">
             <h1>camLine forum 2026</h1>
-            <p className="subtitle">Hilton Dresden - Admin Panel</p>
+            <p className="subtitle">Registration</p>
           </div>
           <div className="header-stats">
             <div className="stat-card-small total">
@@ -298,100 +245,16 @@ function AdminView() {
       </header>
 
       <div className="card">
-        <h2>Add Attendees</h2>
-        
-        <button 
-          onClick={() => setShowImport(!showImport)} 
-          className="btn btn-toggle"
-        >
-          {showImport ? '▼ Hide CSV Import' : '▶ Show CSV Import'}
-        </button>
-
-        {showImport && (
-          <>
-            <div className="import-section">
-              <div className="import-buttons">
-                <label htmlFor="csv-upload" className="btn btn-import">
-                  {importing ? '⏳ Importing...' : 'Import CSV from Excel'}
-                </label>
-                <input
-                  id="csv-upload"
-                  type="file"
-                  accept=".csv"
-                  onChange={importFromCSV}
-                  disabled={importing}
-                  style={{ display: 'none' }}
-                />
-                <button onClick={downloadTemplate} className="btn btn-secondary">
-                  Download CSV Template
-                </button>
-              </div>
-              <p className="import-note">
-                Export your Excel data as CSV (Name, Email columns), then import it here
-              </p>
-            </div>
-
-            <div className="divider">
-              <span>OR</span>
-            </div>
-          </>
-        )}
-
-        <form onSubmit={addAttendee} className="add-form">
-          <input
-            type="text"
-            placeholder="Name *"
-            value={newAttendeeName}
-            onChange={(e) => setNewAttendeeName(e.target.value)}
-            required
-            className="input"
-          />
-          <input
-            type="email"
-            placeholder="Email (optional)"
-            value={newAttendeeEmail}
-            onChange={(e) => setNewAttendeeEmail(e.target.value)}
-            className="input"
-          />
-          <input
-            type="text"
-            placeholder="Company (optional)"
-            value={newAttendeeCompany}
-            onChange={(e) => setNewAttendeeCompany(e.target.value)}
-            className="input"
-          />
-          <button type="submit" className="btn btn-primary">
-            Add Single Attendee
-          </button>
-        </form>
-      </div>
-
-      <div className="card">
-        <h2>Quick Check-In</h2>
-        {!showScanner ? (
-          <button onClick={startQRScanner} className="btn btn-primary btn-scan">
-            Scan QR Code
-          </button>
-        ) : (
-          <>
-            <div id="qr-reader" style={{ width: '100%' }}></div>
-            <button onClick={stopQRScanner} className="btn btn-danger">
-              Stop Scanning
-            </button>
-          </>
-        )}
-        {scannerError && <p className="error-message">{scannerError}</p>}
-        <p className="scanner-note">
-          Scan attendee QR code
-        </p>
-      </div>
-
-      <div className="card">
         <div className="card-header">
           <h2>Attendee List</h2>
-          <button onClick={exportToCSV} className="btn btn-export">
-            Export CSV
-          </button>
+          <div className="header-actions">
+            <button onClick={() => setShowAddModal(true)} className="btn btn-scan">
+              ➕
+            </button>
+            <button onClick={startQRScanner} className="btn btn-scan">
+              ⛶
+            </button>
+          </div>
         </div>
 
         <div className="controls">
@@ -460,7 +323,7 @@ function AdminView() {
                     <td>
                       <div className="table-actions">
                         <button
-                          onClick={() => toggleCheckIn(attendee.id, attendee.checked_in, attendee.check_in_time)}
+                          onClick={() => toggleCheckIn(attendee.id, attendee.checked_in)}
                           className={`btn-table ${attendee.checked_in ? 'btn-undo' : 'btn-checkin'}`}
                         >
                           {attendee.checked_in ? 'Undo' : 'Check In'}
@@ -482,7 +345,7 @@ function AdminView() {
       </div>
 
       <footer className="footer">
-        <p>Admin Mode - Full access to all features</p>
+        <p>All changes sync in real-time across all devices</p>
       </footer>
 
       {showModal && (
@@ -502,8 +365,86 @@ function AdminView() {
           </div>
         </div>
       )}
+
+      {/* Add Attendee Modal */}
+      {showAddModal && (
+        <div className="modal-overlay" onClick={() => setShowAddModal(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>Add New Attendee</h2>
+              <button className="modal-close" onClick={() => setShowAddModal(false)}>&times;</button>
+            </div>
+            <form onSubmit={addAttendee} className="modal-form">
+              <div className="form-group">
+                <label htmlFor="name">Name *</label>
+                <input
+                  type="text"
+                  id="name"
+                  placeholder="Enter attendee name"
+                  value={newAttendeeName}
+                  onChange={(e) => setNewAttendeeName(e.target.value)}
+                  required
+                  className="input"
+                />
+              </div>
+              <div className="form-group">
+                <label htmlFor="email">Email *</label>
+                <input
+                  type="email"
+                  id="email"
+                  placeholder="Enter email address"
+                  value={newAttendeeEmail}
+                  onChange={(e) => setNewAttendeeEmail(e.target.value)}
+                  required
+                  className="input"
+                />
+              </div>
+              <div className="form-group">
+                <label htmlFor="company">Company</label>
+                <input
+                  type="text"
+                  id="company"
+                  placeholder="Enter company name (optional)"
+                  value={newAttendeeCompany}
+                  onChange={(e) => setNewAttendeeCompany(e.target.value)}
+                  className="input"
+                />
+              </div>
+              <div className="modal-actions">
+                <button type="button" onClick={() => setShowAddModal(false)} className="btn btn-secondary">
+                  Cancel
+                </button>
+                <button type="submit" className="btn btn-primary">
+                  Add Attendee
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* QR Scanner Modal */}
+      {showScanner && (
+        <div className="modal-overlay" onClick={stopQRScanner}>
+          <div className="modal-content modal-scanner" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>Scan QR Code</h2>
+              <button className="modal-close" onClick={stopQRScanner}>&times;</button>
+            </div>
+            <div className="modal-body">
+              <div id="qr-reader" style={{ width: '100%' }}></div>
+              {scannerError && <p className="error-message" style={{ marginTop: '1rem' }}>{scannerError}</p>}
+            </div>
+            <div className="modal-actions" style={{ justifyContent: 'center', paddingBottom: '2rem' }}>
+              <button onClick={stopQRScanner} className="btn" style={{ background: '#f44336', color: 'white' }}>
+                Close Scanner
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
 
-export default AdminView
+export default Registration

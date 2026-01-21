@@ -1,0 +1,245 @@
+.home-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 20px;
+  position: relative;
+}
+
+.hamburger-menu {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  z-index: 1000;
+}
+
+.hamburger-btn {
+  background: rgba(255, 255, 255, 0.9);
+  border: none;
+  font-size: 2rem;
+  padding: 10px 15px;
+  border-radius: 8px;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  transition: all 0.3s ease;
+  font-family: 'Exo', inherit;
+}
+
+.hamburger-btn:hover {
+  background: white;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.menu-dropdown {
+  position: absolute;
+  top: 60px;
+  right: 0;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  overflow: hidden;
+  min-width: 200px;
+  animation: slideDown 0.3s ease;
+  font-family: 'Exo', inherit;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.menu-item {
+  display: block;
+  width: 100%;
+  padding: 12px 20px;
+  border: none;
+  background: none;
+  text-align: left;
+  font-size: 1rem;
+  font-weight: 500;
+  font-family: 'Exo', sans-serif !important;
+  cursor: pointer;
+  transition: background 0.2s;
+  color: #333;
+}
+
+.menu-item:hover {
+  background: linear-gradient(135deg, #00239D 0%, #00d3af 100%);
+  color: white;
+}
+
+.menu-item:first-child {
+  border-top: none;
+}
+
+.home-container h1 {
+  color: white;
+  margin-bottom: 40px;
+  font-size: 2.5rem;
+  text-align: center;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  line-height: 1.2;
+  font-family: 'Exo', inherit;
+}
+
+.home-container .event-title {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  margin: 0;
+  font-size: 2.5rem;
+  max-width: 50%;
+  word-wrap: break-word;
+  text-align: left;
+  line-height: 1.3;
+  font-family: 'Exo', inherit;
+}
+
+.events-container {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  width: 100%;
+  max-width: 100%;
+  flex-wrap: wrap;
+  padding: 20px;
+}
+
+.live-events {
+  display: flex;
+  flex-direction: row;
+  gap: 20px;
+  width: 100%;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.upcoming-events {
+  display: flex;
+  flex-direction: row;
+  gap: 20px;
+  width: 100%;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.event-display {
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 16px;
+  padding: 2rem;
+  width: 100%;
+  max-width: 400px;
+  height: 280px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.current-event,
+.next-event {
+  text-align: center;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.event-status {
+  display: inline-block;
+  padding: 0.5rem 1.5rem;
+  border-radius: 24px;
+  font-size: 0.875rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+  margin-bottom: 1rem;
+}
+
+.event-status.in-progress {
+  background: linear-gradient(135deg, #ff6b6b, #ee5a6f);
+  color: white;
+  animation: pulse 2s infinite;
+}
+
+.event-status.upcoming {
+  background: linear-gradient(135deg, #4facfe, #00f2fe);
+  color: white;
+}
+
+.event-status.completed {
+  background: linear-gradient(135deg, #6c757d, #495057);
+  color: white;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.8; }
+}
+
+.event-display h2 {
+  margin: 0 0 1rem 0;
+  color: #212529;
+  font-size: 1.75rem;
+  font-weight: 600;
+  font-family: 'Exo', inherit;
+}
+
+.event-display .presenter,
+.event-display .location,
+.event-display .time {
+  margin: 0.1rem 0;
+  color: #6c757d;
+  font-size: 1rem;
+  font-family: 'Exo', inherit;
+}
+
+.event-display .countdown {
+  margin: 1rem 0 0 0;
+  color: #007bff;
+  font-size: 1.25rem;
+  font-weight: 700;
+  min-width: 300px;
+  white-space: nowrap;
+  font-family: 'Exo', inherit;
+}
+
+@media (max-width: 600px) {
+  .live-events {
+    grid-template-columns: 1fr;
+  }
+
+  .event-display {
+    width: 100%;
+    max-width: 100%;
+    height: auto;
+    min-height: 250px;
+    padding: 1.5rem;
+  }
+
+  .hamburger-btn {
+    font-size: 1.5rem;
+    padding: 8px 12px;
+  }
+
+  .home-container h1 {
+    font-size: 1.8rem;
+  }
+
+  .home-container .event-title {
+    font-size: 1.5rem;
+    max-width: 60%;
+  }
+}
