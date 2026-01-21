@@ -239,8 +239,7 @@
   .event-display .presenter,
   .event-display .location,
   .event-display .time {
-    font-size: 0.95rem;
-    margin: 0.05rem 0;
+    display: none;
   }
 
   .event-display .countdown {
