@@ -236,6 +236,12 @@
     margin: 0 0 0.5rem 0;
   }
 
+  .event-display .presenter,
+  .event-display .location,
+  .event-display .time {
+    display: none;
+  }
+
   .event-display .countdown {
     font-size: 1rem;
     margin: 0.5rem 0 0 0;
