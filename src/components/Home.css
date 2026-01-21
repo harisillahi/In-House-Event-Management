@@ -264,3 +264,10 @@
     font-size: 1.5rem;
     margin-bottom: 1.5rem;
   }
+
+  .home-container .event-title {
+    font-size: 1.25rem;
+    top: 15px;
+    left: 15px;
+    max-width: 70%;
+  }
