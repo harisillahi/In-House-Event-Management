@@ -94,8 +94,18 @@
 
   .current-time-clock {
     padding: 10px 15px;
-    min-width: 120px;
-    width: 120px;
+    min-width: 60px;
+    width: 60px;
+    min-height: 70px;
+    height: 70px;
+  }
+
+  .clock-time {
+    font-size: 1.4rem;
+  }
+
+  .clock-date {
+    font-size: 0.6rem;
   }
 }
 
