@@ -201,15 +201,15 @@
 
 @media (max-width: 768px) {
   .stat-card {
-    padding: 15px;
+    padding: 10px 15px;
   }
 
   .stat-number {
-    font-size: 2rem;
+    font-size: 1.4rem;
   }
 
   .stat-label {
-    font-size: 0.8rem;
+    font-size: 0.6rem;
   }
 }
 
