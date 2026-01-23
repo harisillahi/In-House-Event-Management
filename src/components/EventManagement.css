@@ -1,5 +1,43 @@
 /* Event Management Styles - Matching Registration Design */
 
+/* Location Tabs */
+.location-tabs {
+  display: flex;
+  gap: 0.5rem;
+  padding: 1rem 1.5rem 0 1.5rem;
+  border-bottom: 2px solid #e9ecef;
+  flex-wrap: wrap;
+}
+
+.location-tab {
+  padding: 0.75rem 1.5rem;
+  border: none;
+  background: transparent;
+  border-bottom: 3px solid transparent;
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: 500;
+  font-family: 'Exo', sans-serif !important;
+  color: #6c757d;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  position: relative;
+  bottom: -2px;
+}
+
+.location-tab:hover {
+  color: #12215f;
+  background: rgba(18, 33, 95, 0.05);
+}
+
+.location-tab.active {
+  color: white;
+  background: #12215f;
+  border-bottom-color: #00a98b;
+  font-weight: 600;
+  border-radius: 6px 6px 0 0;
+}
+
 .event-form {
   margin-top: 1rem;
   padding: 1rem;
@@ -39,7 +77,7 @@
   border-radius: 6px;
   cursor: pointer;
   font-size: 1rem;
-  font-family: 'Exo', inherit;
+  font-family: 'Exo', sans-serif !important;
   margin-bottom: 1rem;
 }
 
@@ -166,6 +204,8 @@
 .status-in_progress {
   background: #fff3cd;
   color: #856404;
+  border: 2px solid #ffc107;
+  font-weight: 600;
 }
 
 .status-completed {
@@ -237,16 +277,16 @@
 }
 
 .btn-table {
-  padding: 0.6rem 1rem;
+  padding: 0.45rem 0.75rem;
   border: 1px solid #dee2e6;
   background: white;
   border-radius: 4px;
   cursor: pointer;
-  font-size: 0.875rem;
-  font-family: 'Exo', inherit;
+  font-size: 0.656rem;
+  font-family: 'Exo', sans-serif !important;
   transition: all 0.2s;
   white-space: nowrap;
-  min-width: 85px;
+  min-width: 64px;
 }
 
 .btn-start {

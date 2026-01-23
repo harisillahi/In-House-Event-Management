@@ -145,6 +145,34 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  transition: all 0.3s ease;
+}
+
+/* Make single event card larger on desktop */
+.events-container .event-display:only-child {
+  max-width: 1200px;
+  height: 400px;
+}
+
+.events-container .event-display:only-child h2 {
+  font-size: 3rem;
+}
+
+.events-container .event-display:only-child .presenter,
+.events-container .event-display:only-child .location,
+.events-container .event-display:only-child .time {
+  font-size: 1.5rem;
+  margin: 0.3rem 0;
+}
+
+.events-container .event-display:only-child .countdown {
+  font-size: 2.5rem;
+  margin: 2rem 0 0 0;
+}
+
+.events-container .event-display:only-child .event-status {
+  font-size: 1.2rem;
+  padding: 0.75rem 2rem;
 }
 
 .current-event,
@@ -231,15 +259,27 @@
     margin: 0;
   }
 
+  /* Reset single event enlargement on mobile */
+  .events-container .event-display:only-child {
+    max-width: 100%;
+    height: auto;
+  }
+
   .event-display h2 {
     font-size: 1.1rem;
     margin: 0 0 0.5rem 0;
   }
 
+  .events-container .event-display:only-child h2 {
+    font-size: 1.1rem;
+  }
+
   .event-display .presenter,
   .event-display .location,
   .event-display .time {
-    display: none;
+    display: block;
+    font-size: 0.9rem;
+    margin: 0.3rem 0;
   }
 
   .event-display .countdown {
@@ -248,11 +288,21 @@
     min-width: auto;
   }
 
+  .events-container .event-display:only-child .countdown {
+    font-size: 1rem;
+    margin: 0.5rem 0 0 0;
+  }
+
   .event-status {
     padding: 0.4rem 1rem;
     font-size: 0.75rem;
     letter-spacing: 0.5px;
     margin-bottom: 0.75rem;
+  }
+
+  .events-container .event-display:only-child .event-status {
+    padding: 0.4rem 1rem;
+    font-size: 0.75rem;
   }
 
   .hamburger-btn {
@@ -271,4 +321,18 @@
     left: 15px;
     max-width: 70%;
   }
+}
+
+/* Fade in animation for carousel */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.event-display.fade-in {
+  animation: fadeIn 0.5s ease-in-out;
 }

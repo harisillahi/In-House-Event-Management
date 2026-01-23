@@ -52,17 +52,17 @@
 }
 
 .stat-card-small.total {
-  background: #12215f;
+  background: #003cc4;
   color: white;
 }
 
 .stat-card-small.checked-in {
-  background: linear-gradient(135deg, #00239D 0%, #12215f 100%);
+  background: linear-gradient(135deg, #018b74 100%);
   color: white;
 }
 
 .stat-card-small.not-checked-in {
-  background: linear-gradient(135deg, #024338 0%, #018b74 100%);
+  background: linear-gradient(135deg, #f44336 100%);
   color: white;
 }
 
@@ -343,16 +343,18 @@
 .btn-primary {
   background: linear-gradient(135deg, #00239D 0%, #00d3af 100%);
   color: white;
-  font-family: 'Exo', inherit;
+  font-family: 'Exo', sans-serif !important;
 }
 
 .btn-export {
   background: #12215f;
   color: white;
+  font-family: 'Exo', sans-serif !important;
 }
 
 .btn-import {
   background: #00d3af;
+  font-family: 'Exo', sans-serif !important;
   color: white;
   cursor: pointer;
   display: inline-block;

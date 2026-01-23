@@ -12,6 +12,7 @@ function Admin() {
   const [searchTerm, setSearchTerm] = useState('')
   const [filter, setFilter] = useState('all')
   const [forumName, setForumName] = useState(localStorage.getItem('forumName') || 'camLine forum 2026')
+  const [currentTime, setCurrentTime] = useState(new Date())
 
   useEffect(() => {
     fetchData()
@@ -36,6 +37,15 @@ function Admin() {
       supabase.removeChannel(attendeesChannel)
       supabase.removeChannel(eventsChannel)
     }
+  }, [])
+
+  // Update current time every second
+  useEffect(() => {
+    const timeInterval = setInterval(() => {
+      setCurrentTime(new Date())
+    }, 1000)
+
+    return () => clearInterval(timeInterval)
   }, [])
 
   const fetchData = async () => {
@@ -273,6 +283,10 @@ function Admin() {
             <p className="subtitle">Manage Attendees & Events Data</p>
           </div>
           <div className="header-stats">
+            <div className="current-time-clock">
+              <div className="clock-time">{currentTime.toLocaleTimeString('en-US', { hour12: false })}</div>
+              <div className="clock-date">{currentTime.toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' })}</div>
+            </div>
             <div className="stat-card-small total">
               <div className="stat-number-small">{stats.totalAttendees}</div>
               <div className="stat-label-small">Attendees</div>
@@ -284,10 +298,6 @@ function Admin() {
             <div className="stat-card-small total">
               <div className="stat-number-small">{stats.totalEvents}</div>
               <div className="stat-label-small">Events</div>
-            </div>
-            <div className="stat-card-small in-progress">
-              <div className="stat-number-small">{stats.inProgressEvents}</div>
-              <div className="stat-label-small">In Progress</div>
             </div>
           </div>
         </div>

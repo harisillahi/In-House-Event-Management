@@ -62,6 +62,7 @@ function EventManagement() {
   const [currentTime, setCurrentTime] = useState(new Date())
   const [countdowns, setCountdowns] = useState({})
   const [focusedEvent, setFocusedEvent] = useState(null)
+  const [activeLocation, setActiveLocation] = useState('all')
   
   // Form states
   const [formData, setFormData] = useState({
@@ -117,6 +118,62 @@ function EventManagement() {
 
     return () => clearInterval(timeInterval)
   }, [])
+
+  // Auto-start and auto-complete events based on current time
+  useEffect(() => {
+    const autoStartInterval = setInterval(async () => {
+      const now = new Date()
+      let hasChanges = false
+      
+      for (const event of events) {
+        if (event.status === 'scheduled' && event.start_time) {
+          const startTime = new Date(event.start_time)
+          if (now >= startTime) {
+            // Auto-start the event
+            await supabase
+              .from('events')
+              .update({ status: 'in_progress', end_time: new Date(now.getTime() + event.duration * 60000).toISOString() })
+              .eq('id', event.id)
+            hasChanges = true
+          }
+        }
+        
+        if (event.status === 'in_progress' && event.end_time) {
+          const endTime = new Date(event.end_time)
+          if (now >= endTime) {
+            // Auto-complete the event
+            await supabase
+              .from('events')
+              .update({ status: 'completed' })
+              .eq('id', event.id)
+            hasChanges = true
+            
+            // Auto-start next event in same location
+            const nextEvent = events.find(e => 
+              e.location === event.location && 
+              e.status === 'scheduled' &&
+              e.cue_order > event.cue_order
+            )
+            if (nextEvent) {
+              await supabase
+                .from('events')
+                .update({ status: 'in_progress', end_time: new Date(now.getTime() + nextEvent.duration * 60000).toISOString() })
+                .eq('id', nextEvent.id)
+              hasChanges = true
+            }
+          }
+        }
+      }
+      
+      // Refresh events if changes were made
+      if (hasChanges) {
+        await new Promise(resolve => setTimeout(resolve, 100))
+        fetchEvents()
+      }
+    }, 1000)
+
+    return () => clearInterval(autoStartInterval)
+  }, [events])
 
   const fetchEvents = async () => {
     try {
@@ -196,9 +253,12 @@ function EventManagement() {
       }
 
       if (formData.start_time && formData.duration) {
+        // datetime-local input already gives us local time, just parse it directly
         const startTime = new Date(formData.start_time)
         const durationMinutes = parseInt(formData.duration) || 30
         const endTime = new Date(startTime.getTime() + durationMinutes * 60000)
+        
+        eventData.start_time = startTime.toISOString()
         eventData.end_time = endTime.toISOString()
       }
 
@@ -229,11 +289,24 @@ function EventManagement() {
 
   const handleEdit = (event) => {
     setEditingEvent(event)
+    
+    // Convert UTC time from database to local time for datetime-local input
+    const formatLocalDateTime = (isoString) => {
+      if (!isoString) return ''
+      const date = new Date(isoString)
+      const year = date.getFullYear()
+      const month = String(date.getMonth() + 1).padStart(2, '0')
+      const day = String(date.getDate()).padStart(2, '0')
+      const hours = String(date.getHours()).padStart(2, '0')
+      const minutes = String(date.getMinutes()).padStart(2, '0')
+      return `${year}-${month}-${day}T${hours}:${minutes}`
+    }
+    
     setFormData({
       title: event.title,
       description: event.description || '',
-      start_time: event.start_time ? event.start_time.substring(0, 16) : '',
-      end_time: event.end_time ? event.end_time.substring(0, 16) : '',
+      start_time: formatLocalDateTime(event.start_time),
+      end_time: formatLocalDateTime(event.end_time),
       duration: event.duration || 30,
       presenter: event.presenter || '',
       location: event.location || '',
@@ -247,6 +320,9 @@ function EventManagement() {
     if (!confirm('Are you sure you want to delete this event?')) return
     
     try {
+      // Remove from local state immediately for instant UI feedback
+      setEvents(events.filter(e => e.id !== id))
+      
       const { error } = await supabase
         .from('events')
         .delete()
@@ -255,6 +331,8 @@ function EventManagement() {
       if (error) throw error
     } catch (error) {
       console.error('Error deleting event:', error)
+      // Refresh to show correct state if delete failed
+      fetchEvents()
     }
   }
 
@@ -369,11 +447,16 @@ function EventManagement() {
                           (event.description && event.description.toLowerCase().includes(searchTerm.toLowerCase())) ||
                           (event.presenter && event.presenter.toLowerCase().includes(searchTerm.toLowerCase()))
     
-    if (filter === 'scheduled') return matchesSearch && event.status === 'scheduled'
-    if (filter === 'in_progress') return matchesSearch && event.status === 'in_progress'
-    if (filter === 'completed') return matchesSearch && event.status === 'completed'
-    return matchesSearch
+    const matchesLocation = activeLocation === 'all' || event.location === activeLocation
+    
+    if (filter === 'scheduled') return matchesSearch && matchesLocation && event.status === 'scheduled'
+    if (filter === 'in_progress') return matchesSearch && matchesLocation && event.status === 'in_progress'
+    if (filter === 'completed') return matchesSearch && matchesLocation && event.status === 'completed'
+    return matchesSearch && matchesLocation
   })
+
+  // Get unique locations from events
+  const locations = ['all', ...new Set(events.map(e => e.location).filter(Boolean))]
 
   const stats = {
     total: events.length
@@ -411,7 +494,7 @@ function EventManagement() {
               }} 
               className="btn-add-event"
             >
-              + Add Event
+            Add Event
             </button>
           </div>
         </div>
@@ -565,6 +648,21 @@ function EventManagement() {
           <h2>Event Rundown</h2>
         </div>
 
+        {/* Location Tabs */}
+        {locations.length > 1 && (
+          <div className="location-tabs">
+            {locations.map(location => (
+              <button
+                key={location}
+                onClick={() => setActiveLocation(location)}
+                className={`location-tab ${activeLocation === location ? 'active' : ''}`}
+              >
+                {location === 'all' ? 'All Locations' : location}
+              </button>
+            ))}
+          </div>
+        )}
+
         <div className="controls">
           <input
             type="text"
@@ -675,50 +773,35 @@ function EventManagement() {
                 </div>
 
                 <div className="event-actions">
-                  <div className="status-controls">
-                    <button
-                      onClick={() => handleStatusChange(event.id, 'in_progress')}
-                      className="btn-table btn-start"
-                      disabled={event.status === 'in_progress'}
-                    >
-                      Start
-                    </button>
-                    <button
-                      onClick={() => handleStatusChange(event.id, 'completed')}
-                      className="btn-table btn-complete"
-                      disabled={event.status === 'completed'}
-                    >
-                      Complete
-                    </button>
-                    <button
-                      onClick={() => handleStatusChange(event.id, 'scheduled')}
-                      className="btn-table btn-reset"
-                      disabled={event.status === 'scheduled'}
-                    >
-                      Reset
-                    </button>
-                  </div>
-                  <div className="edit-controls">
-                    <button
-                      onClick={() => setFocusedEvent(event)}
-                      className="btn-table btn-focus"
-                      disabled={event.status !== 'in_progress'}
-                    >
-                      Focus
-                    </button>
-                    <button
-                      onClick={() => handleEdit(event)}
-                      className="btn-table btn-edit"
-                    >
-                      Edit
-                    </button>
-                    <button
-                      onClick={() => handleDelete(event.id)}
-                      className="btn-table btn-delete"
-                    >
-                      Delete
-                    </button>
-                  </div>
+                  <button
+                    onClick={() => handleStatusChange(
+                      event.id, 
+                      event.status === 'in_progress' ? 'completed' : 'in_progress'
+                    )}
+                    className={`btn-table ${event.status === 'in_progress' ? 'btn-stop' : 'btn-start'}`}
+                    disabled={event.status === 'completed'}
+                  >
+                    {event.status === 'in_progress' ? 'Stop' : 'Start'}
+                  </button>
+                  <button
+                    onClick={() => setFocusedEvent(event)}
+                    className="btn-table btn-focus"
+                    disabled={event.status !== 'in_progress'}
+                  >
+                    Focus
+                  </button>
+                  <button
+                    onClick={() => handleEdit(event)}
+                    className="btn-table btn-edit"
+                  >
+                    Edit
+                  </button>
+                  <button
+                    onClick={() => handleDelete(event.id)}
+                    className="btn-table btn-delete"
+                  >
+                    Delete
+                  </button>
                 </div>
               </div>
             ))}

@@ -16,6 +16,7 @@ function Registration() {
   const [modalMessage, setModalMessage] = useState('')
   const [showAddModal, setShowAddModal] = useState(false)
   const html5QrCodeRef = useRef(null)
+  const [currentTime, setCurrentTime] = useState(new Date())
 
   useEffect(() => {
     fetchAttendees()
@@ -34,6 +35,15 @@ function Registration() {
     return () => {
       supabase.removeChannel(channel)
     }
+  }, [])
+
+  // Update current time every second
+  useEffect(() => {
+    const timeInterval = setInterval(() => {
+      setCurrentTime(new Date())
+    }, 1000)
+
+    return () => clearInterval(timeInterval)
   }, [])
 
   const fetchAttendees = async () => {
@@ -228,6 +238,10 @@ function Registration() {
             <p className="subtitle">Registration</p>
           </div>
           <div className="header-stats">
+            <div className="current-time-clock">
+              <div className="clock-time">{currentTime.toLocaleTimeString('en-US', { hour12: false })}</div>
+              <div className="clock-date">{currentTime.toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' })}</div>
+            </div>
             <div className="stat-card-small total">
               <div className="stat-number-small">{stats.total}</div>
               <div className="stat-label-small">Total</div>

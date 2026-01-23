@@ -9,7 +9,11 @@ function Home() {
   const [events, setEvents] = useState([])
   const [countdowns, setCountdowns] = useState({})
   const [menuOpen, setMenuOpen] = useState(false)
+  const [displayedEventsByLocation, setDisplayedEventsByLocation] = useState({})
+  const [animationKey, setAnimationKey] = useState(0)
   const eventRef = useRef([])
+  const carouselIntervalRef = useRef(null)
+  const eventsByLocationRef = useRef({})
 
   useEffect(() => {
     fetchEvents()
@@ -38,13 +42,86 @@ function Home() {
       supabase.removeChannel(channel)
       clearInterval(interval)
       clearInterval(pollInterval)
+      if (carouselIntervalRef.current) clearInterval(carouselIntervalRef.current)
     }
   }, [])
 
   useEffect(() => {
     eventRef.current = events
+    
+    // Group events by location
+    const locationMap = new Map()
+    events.forEach(event => {
+      const location = event.location || 'No Location'
+      if (!locationMap.has(location)) {
+        locationMap.set(location, [])
+      }
+      locationMap.get(location).push(event)
+    })
+    
+    // Store events by location in ref for carousel
+    eventsByLocationRef.current = Object.fromEntries(locationMap)
+    
+    // Initialize displayed events - show first event per location (only if not already set)
+    setDisplayedEventsByLocation(prev => {
+      const newState = {}
+      locationMap.forEach((eventsAtLocation, location) => {
+        // Preserve existing index if it exists and is valid
+        if (prev[location] !== undefined && prev[location] < eventsAtLocation.length) {
+          newState[location] = prev[location]
+        } else {
+          newState[location] = 0
+        }
+      })
+      return newState
+    })
+    
     updateCountdowns()
   }, [events])
+
+  // Separate effect for carousel interval
+  useEffect(() => {
+    // Clear existing carousel interval
+    if (carouselIntervalRef.current) {
+      clearInterval(carouselIntervalRef.current)
+      carouselIntervalRef.current = null
+    }
+    
+    // Check if there are multiple events at any location
+    const locationsData = eventsByLocationRef.current
+    const hasMultiplePerLocation = Object.values(locationsData).some(arr => arr && arr.length > 1)
+    
+    console.log('Setting up carousel. Has multiple events per location:', hasMultiplePerLocation)
+    console.log('Events by location:', locationsData)
+    
+    if (hasMultiplePerLocation && events.length > 0) {
+      carouselIntervalRef.current = setInterval(() => {
+        console.log('Carousel rotating...')
+        setDisplayedEventsByLocation(prev => {
+          const newState = { ...prev }
+          Object.keys(newState).forEach(location => {
+            const locEventsCount = eventsByLocationRef.current[location]?.length || 1
+            if (locEventsCount > 1) {
+              const newIndex = (newState[location] + 1) % locEventsCount
+              console.log(`Location ${location}: ${newState[location]} -> ${newIndex}`)
+              newState[location] = newIndex
+            }
+          })
+          return newState
+        })
+        // Increment animation key to trigger re-render with animation
+        setAnimationKey(prev => prev + 1)
+      }, 10000) // Change every 10 seconds
+      
+      console.log('Carousel interval started')
+    }
+    
+    return () => {
+      if (carouselIntervalRef.current) {
+        clearInterval(carouselIntervalRef.current)
+      }
+    }
+  }, [events.length]) // Only re-run when the number of events changes, not on every update
 
   const fetchEvents = async () => {
     try {
@@ -55,28 +132,37 @@ function Home() {
       
       if (error) throw error
       
-      // Filter out completed events, only show scheduled and in_progress
-      const activeEvents = data?.filter(e => e.status !== 'completed') || []
+      const now = new Date()
+      const fifteenMinutesFromNow = new Date(now.getTime() + 15 * 60000)
       
-      // Group by location and show only earliest event per location
-      const locationMap = new Map()
-      activeEvents.forEach(event => {
-        const location = event.location || 'No Location'
-        const existing = locationMap.get(location)
-        
-        if (!existing) {
-          locationMap.set(location, event)
-        } else {
-          // Prioritize in_progress, then earliest start_time
-          if (event.status === 'in_progress' && existing.status !== 'in_progress') {
-            locationMap.set(location, event)
-          } else if (event.status === existing.status && event.start_time < existing.start_time) {
-            locationMap.set(location, event)
-          }
+      // Filter: show in_progress events and upcoming events within 15 minutes
+      const visibleEvents = data?.filter(e => {
+        if (e.status === 'in_progress') return true
+        if (e.status === 'scheduled' && e.start_time) {
+          const startTime = new Date(e.start_time)
+          return startTime >= now && startTime <= fifteenMinutesFromNow
         }
+        return false
+      }) || []
+      
+      // Group by location and get all visible events per location
+      const locationMap = new Map()
+      visibleEvents.forEach(event => {
+        const location = event.location || 'No Location'
+        if (!locationMap.has(location)) {
+          locationMap.set(location, [])
+        }
+        locationMap.get(location).push(event)
       })
       
-      setEvents(Array.from(locationMap.values()))
+      // Sort events within each location by cue_order and take them
+      const displayEvents = []
+      locationMap.forEach((locationEvents) => {
+        locationEvents.sort((a, b) => (a.cue_order || 0) - (b.cue_order || 0))
+        displayEvents.push(...locationEvents)
+      })
+      
+      setEvents(displayEvents)
     } catch (error) {
       console.error('Error fetching events:', error)
     }
@@ -98,13 +184,13 @@ function Home() {
           const hours = Math.floor(diff / 3600)
           const minutes = Math.floor((diff % 3600) / 60)
           const seconds = diff % 60
-          newCountdowns[event.id] = `+${hours}h ${minutes}m ${seconds}s`
+          newCountdowns[event.id] = hours > 0 ? `+${hours}h ${minutes}m ${seconds}s` : `+${minutes}m ${seconds}s`
         } else {
           const diff = differenceInSeconds(end, now)
           const hours = Math.floor(diff / 3600)
           const minutes = Math.floor((diff % 3600) / 60)
           const seconds = diff % 60
-          newCountdowns[event.id] = `${hours}h ${minutes}m ${seconds}s`
+          newCountdowns[event.id] = hours > 0 ? `${hours}h ${minutes}m ${seconds}s` : `${minutes}m ${seconds}s`
         }
       } else if (event.status === 'scheduled' && event.start_time) {
         const start = new Date(event.start_time)
@@ -115,7 +201,7 @@ function Home() {
           const hours = Math.floor(diff / 3600)
           const minutes = Math.floor((diff % 3600) / 60)
           const seconds = diff % 60
-          newCountdowns[event.id] = `Starts in ${hours}h ${minutes}m ${seconds}s`
+          newCountdowns[event.id] = hours > 0 ? `Starts in ${hours}h ${minutes}m ${seconds}s` : `Starts in ${minutes}m ${seconds}s`
         } else {
           newCountdowns[event.id] = 'Event not started yet'
         }
@@ -169,24 +255,54 @@ function Home() {
       </h1>
       
       <div className="events-container">
-        {events.map((event) => (
-          <div key={event.id} className="event-display">
-            <div className={event.status === 'in_progress' ? 'current-event' : 'next-event'}>
-              <div className={`event-status ${event.status === 'in_progress' ? 'in-progress' : event.status === 'completed' ? 'completed' : 'upcoming'}`}>
-                {event.status === 'in_progress' ? 'LIVE NOW' : 
-                 event.status === 'completed' ? 'COMPLETED' :
-                 (event.status === 'scheduled' && new Date(event.start_time) > new Date() ? 'UP NEXT' : 'NOT STARTED YET')}
+        {events.length > 0 ? (
+          // Group events by location and display one per location
+          (() => {
+            const locationMap = new Map()
+            events.forEach(event => {
+              const location = event.location || 'No Location'
+              if (!locationMap.has(location)) {
+                locationMap.set(location, [])
+              }
+              locationMap.get(location).push(event)
+            })
+            
+            const displayEvents = []
+            locationMap.forEach((locationEvents, location) => {
+              const indexToDisplay = displayedEventsByLocation[location] || 0
+              if (locationEvents[indexToDisplay]) {
+                displayEvents.push(locationEvents[indexToDisplay])
+              }
+            })
+            
+            return displayEvents.map((event) => (
+              <div key={`${event.location}-${animationKey}-${event.id}`} className="event-display fade-in">
+                <div className={event.status === 'in_progress' ? 'current-event' : 'next-event'}>
+                  <div className={`event-status ${event.status === 'in_progress' ? 'in-progress' : event.status === 'completed' ? 'completed' : 'upcoming'}`}>
+                    {event.status === 'in_progress' ? 'LIVE NOW' : 
+                     event.status === 'completed' ? 'COMPLETED' :
+                     (event.status === 'scheduled' && new Date(event.start_time) > new Date() ? 'UP NEXT' : 'NOT STARTED YET')}
+                  </div>
+                  <h2>{event.title}</h2>
+                  {event.presenter && <p className="presenter">Presenter: {event.presenter}</p>}
+                  {event.location && <p className="location">Location: {event.location}</p>}
+                  {event.status === 'in_progress' && event.start_time && event.end_time && (
+                    <p className="time">
+                      {format(new Date(event.start_time), 'HH:mm')} - {format(new Date(event.end_time), 'HH:mm')}
+                    </p>
+                  )}
+                  {event.status === 'scheduled' && event.start_time && (
+                    <p className="countdown">{countdowns[event.id] || 'Calculating...'}</p>
+                  )}
+                </div>
               </div>
-              <h2>{event.title}</h2>
-              {event.presenter && <p className="presenter">Presenter: {event.presenter}</p>}
-              {event.location && <p className="location">Location: {event.location}</p>}
-              {event.status === 'scheduled' && event.start_time && (
-                <p className="time">Starts: {format(new Date(event.start_time), 'MMM dd, HH:mm')}</p>
-              )}
-              <p className="countdown">{countdowns[event.id] || (event.status === 'in_progress' ? '0h 0m 0s' : event.status === 'completed' ? 'Event has ended' : 'Calculating...')}</p>
-            </div>
+            ))
+          })()
+        ) : (
+          <div className="event-display">
+            <p>No events scheduled</p>
           </div>
-        ))}
+        )}
       </div>
     </div>
   )
