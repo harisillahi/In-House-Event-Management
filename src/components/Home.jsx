@@ -269,6 +269,42 @@ function Home() {
 
   return (
     <div className="home-container">
+      {weather && (
+        <div className={`weather-animation ${
+          weather.weathercode === 0 ? 'sunny' :
+          weather.weathercode >= 1 && weather.weathercode <= 3 ? 'cloudy' :
+          weather.weathercode >= 45 && weather.weathercode <= 48 ? 'foggy' :
+          weather.weathercode >= 51 && weather.weathercode <= 67 ? 'rainy' :
+          weather.weathercode >= 71 && weather.weathercode <= 77 ? 'snowy' :
+          weather.weathercode >= 80 && weather.weathercode <= 99 ? 'stormy' : ''
+        }`}>
+          {(weather.weathercode >= 51 && weather.weathercode <= 99) && (
+            <div className="rain-container">
+              {[...Array(50)].map((_, i) => (
+                <div key={i} className="rain" style={{
+                  left: `${Math.random() * 100}%`,
+                  animationDelay: `${Math.random() * 2}s`,
+                  animationDuration: `${0.5 + Math.random() * 0.5}s`
+                }}></div>
+              ))}
+            </div>
+          )}
+          {(weather.weathercode >= 71 && weather.weathercode <= 77) && (
+            <div className="snow-container">
+              {[...Array(50)].map((_, i) => (
+                <div key={i} className="snow" style={{
+                  left: `${Math.random() * 100}%`,
+                  animationDelay: `${Math.random() * 5}s`,
+                  animationDuration: `${5 + Math.random() * 5}s`
+                }}></div>
+              ))}
+            </div>
+          )}
+          {weather.weathercode === 0 && (
+            <div className="sun-rays"></div>
+          )}
+        </div>
+      )}
       <div className="hamburger-menu">
         <button className="hamburger-btn" onClick={() => setMenuOpen(!menuOpen)}>
           ☰
