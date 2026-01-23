@@ -11,17 +11,30 @@ function Home() {
   const [menuOpen, setMenuOpen] = useState(false)
   const [displayedEventsByLocation, setDisplayedEventsByLocation] = useState({})
   const [animationKey, setAnimationKey] = useState(0)
+  const [currentDateTime, setCurrentDateTime] = useState(new Date())
+  const [weather, setWeather] = useState(null)
   const eventRef = useRef([])
   const carouselIntervalRef = useRef(null)
   const eventsByLocationRef = useRef({})
 
   useEffect(() => {
     fetchEvents()
+    fetchWeather()
     
     // Polling mechanism - fetch every 5 seconds as fallback
     const pollInterval = setInterval(() => {
       fetchEvents()
     }, 5000)
+    
+    // Update clock every second
+    const clockInterval = setInterval(() => {
+      setCurrentDateTime(new Date())
+    }, 1000)
+    
+    // Update weather every 10 minutes
+    const weatherInterval = setInterval(() => {
+      fetchWeather()
+    }, 600000)
     
     const channel = supabase
       .channel('home_events_realtime')
@@ -42,6 +55,8 @@ function Home() {
       supabase.removeChannel(channel)
       clearInterval(interval)
       clearInterval(pollInterval)
+      clearInterval(clockInterval)
+      clearInterval(weatherInterval)
       if (carouselIntervalRef.current) clearInterval(carouselIntervalRef.current)
     }
   }, [])
@@ -168,6 +183,47 @@ function Home() {
     }
   }
 
+  const fetchWeather = async () => {
+    try {
+      // Get user's location
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          async (position) => {
+            const { latitude, longitude } = position.coords
+            // Using Open-Meteo API (free, no API key required)
+            const response = await fetch(
+              `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current_weather=true&timezone=auto`
+            )
+            const data = await response.json()
+            setWeather(data.current_weather)
+          },
+          (error) => {
+            console.log('Location access denied, using default location')
+            // Fallback to a default location if user denies
+            fetchWeatherByCity()
+          }
+        )
+      } else {
+        fetchWeatherByCity()
+      }
+    } catch (error) {
+      console.error('Error fetching weather:', error)
+    }
+  }
+
+  const fetchWeatherByCity = async () => {
+    try {
+      // Default to Berlin coordinates
+      const response = await fetch(
+        `https://api.open-meteo.com/v1/forecast?latitude=52.52&longitude=13.41&current_weather=true&timezone=auto`
+      )
+      const data = await response.json()
+      setWeather(data.current_weather)
+    } catch (error) {
+      console.error('Error fetching weather:', error)
+    }
+  }
+
   const updateCountdowns = () => {
     const allEvents = eventRef.current
     const newCountdowns = {}
@@ -253,6 +309,32 @@ function Home() {
       <h1 className="event-title">
         {localStorage.getItem('forumName') || 'camLine forum 2026'}
       </h1>
+      
+      <div className="datetime-weather-widget">
+        <div className="datetime-section">
+          <div className="day-date">
+            <div className="day">{format(currentDateTime, 'EEEE')}</div>
+            <div className="date">{format(currentDateTime, 'MMMM d, yyyy')}</div>
+          </div>
+          <div className="clock">{format(currentDateTime, 'HH:mm')}</div>
+        </div>
+        {weather && (
+          <div className="weather-section">
+            <div className="temperature">{Math.round(weather.temperature)}°C</div>
+            <div className="weather-info">
+              <div className="weather-code">
+                {weather.weathercode === 0 && '☀️ Clear'}
+                {weather.weathercode >= 1 && weather.weathercode <= 3 && '⛅ Partly Cloudy'}
+                {weather.weathercode >= 45 && weather.weathercode <= 48 && '🌫️ Foggy'}
+                {weather.weathercode >= 51 && weather.weathercode <= 67 && '🌧️ Rainy'}
+                {weather.weathercode >= 71 && weather.weathercode <= 77 && '❄️ Snowy'}
+                {weather.weathercode >= 80 && weather.weathercode <= 99 && '⛈️ Stormy'}
+              </div>
+              <div className="wind-speed">{Math.round(weather.windspeed)} km/h</div>
+            </div>
+          </div>
+        )}
+      </div>
       
       <div className="events-container">
         {events.length > 0 ? (

@@ -104,6 +104,86 @@
   font-family: 'Exo', inherit;
 }
 
+.datetime-weather-widget {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: transparent;
+  border-radius: 0;
+  padding: 2rem 0;
+  margin-bottom: 40px;
+  box-shadow: none;
+  gap: 3rem;
+}
+
+.datetime-section {
+  display: flex;
+  align-items: center;
+  gap: 3rem;
+  flex: 1;
+}
+
+.day-date {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.day {
+  font-size: 2rem;
+  font-weight: 700;
+  color: white;
+  font-family: 'Exo', sans-serif;
+}
+
+.date {
+  font-size: 1.25rem;
+  color: rgba(255, 255, 255, 0.8);
+  font-family: 'Exo', sans-serif;
+}
+
+.clock {
+  font-size: 4rem;
+  font-weight: 700;
+  color: white;
+  font-family: 'Exo', sans-serif;
+  letter-spacing: 0.05em;
+}
+
+.weather-section {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+  padding-left: 3rem;
+  border-left: 3px solid rgba(255, 255, 255, 0.3);
+}
+
+.temperature {
+  font-size: 3.5rem;
+  font-weight: 700;
+  color: white;
+  font-family: 'Exo', sans-serif;
+}
+
+.weather-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.weather-code {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: white;
+  font-family: 'Exo', sans-serif;
+}
+
+.wind-speed {
+  font-size: 1rem;
+  color: rgba(255, 255, 255, 0.8);
+  font-family: 'Exo', sans-serif;
+}
+
 .events-container {
   display: flex;
   flex-direction: row;
@@ -250,6 +330,10 @@
     gap: 15px;
   }
 
+  .datetime-weather-widget {
+    display: none;
+  }
+
   .event-display {
     width: 100%;
     max-width: 100%;
@@ -320,6 +404,53 @@
     top: 20px;
     left: 20px;
     max-width: 70%;
+  }
+
+  .datetime-weather-widget {
+    flex-direction: column;
+    gap: 1.5rem;
+    padding: 1.5rem;
+    margin-bottom: 20px;
+  }
+
+  .datetime-section {
+    flex-direction: column;
+    gap: 1.5rem;
+    width: 100%;
+    text-align: center;
+  }
+
+  .day {
+    font-size: 1.5rem;
+  }
+
+  .date {
+    font-size: 1rem;
+  }
+
+  .clock {
+    font-size: 2.5rem;
+  }
+
+  .weather-section {
+    padding-left: 0;
+    padding-top: 1.5rem;
+    border-left: none;
+    border-top: 3px solid #e9ecef;
+    width: 100%;
+    justify-content: center;
+  }
+
+  .temperature {
+    font-size: 2.5rem;
+  }
+
+  .weather-code {
+    font-size: 1rem;
+  }
+
+  .wind-speed {
+    font-size: 0.875rem;
   }
 }
 
