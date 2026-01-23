@@ -456,6 +456,12 @@
   font-family: 'Exo', sans-serif !important;
 }
 
+.btn-danger {
+  background: #dc3545;
+  color: white;
+  font-family: 'Exo', sans-serif !important;
+}
+
 .controls {
   margin-bottom: 20px;
   display: flex;
@@ -806,6 +812,7 @@
   border-top: 1px solid #f0f0f0;
   display: flex;
   justify-content: flex-end;
+  gap: 12px;
 }
 
 .modal-footer .btn {

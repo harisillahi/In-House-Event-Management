@@ -63,6 +63,7 @@ function EventManagement() {
   const [countdowns, setCountdowns] = useState({})
   const [focusedEvent, setFocusedEvent] = useState(null)
   const [activeLocation, setActiveLocation] = useState('all')
+  const [deleteConfirmation, setDeleteConfirmation] = useState(null)
   
   // Form states
   const [formData, setFormData] = useState({
@@ -317,8 +318,10 @@ function EventManagement() {
   }
 
   const handleDelete = async (id) => {
-    if (!confirm('Are you sure you want to delete this event?')) return
-    
+    setDeleteConfirmation(id)
+  }
+
+  const confirmDelete = async (id) => {
     try {
       // Remove from local state immediately for instant UI feedback
       setEvents(events.filter(e => e.id !== id))
@@ -329,10 +332,12 @@ function EventManagement() {
         .eq('id', id)
 
       if (error) throw error
+      setDeleteConfirmation(null)
     } catch (error) {
       console.error('Error deleting event:', error)
       // Refresh to show correct state if delete failed
       fetchEvents()
+      setDeleteConfirmation(null)
     }
   }
 
@@ -837,6 +842,27 @@ function EventManagement() {
               <div className="focus-timer-container">
                 <FocusTimer event={focusedEvent} countdown={countdowns[focusedEvent.id]} />
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {deleteConfirmation && (
+        <div className="modal-overlay" onClick={() => setDeleteConfirmation(null)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>Delete Event</h2>
+            </div>
+            <div className="modal-body">
+              <p>Are you sure you want to delete this event?</p>
+            </div>
+            <div className="modal-footer">
+              <button onClick={() => setDeleteConfirmation(null)} className="btn btn-secondary">
+                Cancel
+              </button>
+              <button onClick={() => confirmDelete(deleteConfirmation)} className="btn btn-danger">
+                Delete
+              </button>
             </div>
           </div>
         </div>
