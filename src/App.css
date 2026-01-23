@@ -44,11 +44,13 @@
   text-align: center;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   min-width: 70px;
+  width: 70px;
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
   min-height: 90px;
+  height: 90px;
 }
 
 .stat-card-small.total {
@@ -79,33 +81,36 @@
 
 @media (max-width: 768px) {
   .stat-card-small {
-    padding: 10px 15px;
-    min-width: 60px;
-    min-height: 70px;
+    padding: 8px 10px;
+    min-width: 55px;
+    width: 55px;
+    min-height: 65px;
+    height: 65px;
   }
 
   .stat-number-small {
-    font-size: 1.4rem;
+    font-size: 1.2rem;
   }
 
   .stat-label-small {
-    font-size: 0.6rem;
+    font-size: 0.55rem;
   }
 
   .current-time-clock {
-    padding: 10px 15px;
-    min-width: 60px;
-    width: 60px;
-    min-height: 70px;
-    height: 70px;
+    padding: 8px 10px;
+    min-width: 55px;
+    width: 55px;
+    min-height: 65px;
+    height: 65px;
   }
 
   .clock-time {
-    font-size: 1.4rem;
+    font-size: 1.2rem;
   }
 
   .clock-date {
-    font-size: 0.6rem;
+    font-size: 0.55rem;
+  }
   }
 }
 
