@@ -424,6 +424,9 @@ function EventManagement() {
     const [movedEvent] = updatedEvents.splice(currentIndex, 1)
     updatedEvents.splice(newIndex, 0, movedEvent)
 
+    // Optimistic update - update local state immediately
+    setEvents(updatedEvents)
+
     // Update cue_order for all affected events
     const updates = updatedEvents.map((e, index) => ({
       id: e.id,
@@ -437,8 +440,13 @@ function EventManagement() {
           .update({ cue_order: update.cue_order })
           .eq('id', update.id)
       }
+      // Fetch fresh data after update completes
+      await new Promise(resolve => setTimeout(resolve, 100))
+      fetchEvents()
     } catch (error) {
       console.error('Error reordering events:', error)
+      // Refresh to show correct state if update failed
+      fetchEvents()
     }
   }
 
