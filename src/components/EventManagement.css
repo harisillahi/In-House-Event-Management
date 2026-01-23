@@ -490,15 +490,24 @@
   padding: 15px 20px;
   border-radius: 10px;
   font-size: 1rem;
-  font-family: 'Exo', inherit;
+  font-family: 'Exo', sans-serif !important;
   font-weight: 600;
   cursor: pointer;
-  min-height: 90px;
+  height: 90px;
   display: flex;
   align-items: center;
   justify-content: center;
   transition: transform 0.2s, box-shadow 0.2s;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  box-sizing: border-box;
+}
+
+@media (max-width: 768px) {
+  .btn-add-event {
+    height: 75px !important;
+    padding: 8px 10px;
+    font-size: 0.9rem;
+  }
 }
 
 .btn-add-event:hover {
