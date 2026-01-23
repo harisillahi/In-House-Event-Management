@@ -77,6 +77,28 @@
   opacity: 0.8;
 }
 
+@media (max-width: 768px) {
+  .stat-card-small {
+    padding: 10px 15px;
+    min-width: 60px;
+    min-height: 70px;
+  }
+
+  .stat-number-small {
+    font-size: 1.4rem;
+  }
+
+  .stat-label-small {
+    font-size: 0.6rem;
+  }
+
+  .current-time-clock {
+    padding: 10px 15px;
+    min-width: 120px;
+    width: 120px;
+  }
+}
+
 .current-time-clock {
   background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
   color: white;
@@ -175,6 +197,20 @@
 .stat-label {
   font-size: 0.95rem;
   opacity: 0.8;
+}
+
+@media (max-width: 768px) {
+  .stat-card {
+    padding: 15px;
+  }
+
+  .stat-number {
+    font-size: 2rem;
+  }
+
+  .stat-label {
+    font-size: 0.8rem;
+  }
 }
 
 .card {
