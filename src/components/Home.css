@@ -320,6 +320,28 @@
   .wind-speed {
     font-size: 0.9rem;
   }
+
+  .announcement-badge {
+    font-size: 1.3rem;
+    padding: 0.6rem 1.5rem;
+    margin-bottom: 1.2rem;
+    letter-spacing: 2px;
+  }
+
+  .announcement-title {
+    font-size: 1.8rem;
+    margin-bottom: 0.6rem;
+  }
+
+  .announcement-content {
+    font-size: 1.6rem;
+    font-weight: 900;
+    margin-bottom: 0.9rem;
+  }
+
+  .announcement-time {
+    font-size: 1.2rem;
+  }
 }
 
 /* Ultra-wide/Foldable phones and Landscape orientation with limited height */
@@ -424,6 +446,29 @@
     font-size: 0.6rem;
     white-space: nowrap;
   }
+
+  .announcement-badge {
+    font-size: 0.75rem !important;
+    padding: 0.4rem 0.8rem !important;
+    margin-bottom: 0.7rem !important;
+    letter-spacing: 1px !important;
+  }
+
+  .announcement-title {
+    font-size: 1rem !important;
+    margin-bottom: 0.5rem !important;
+  }
+
+  .announcement-content {
+    font-size: 0.9rem !important;
+    font-weight: 700 !important;
+    margin-bottom: 0.7rem !important;
+    line-height: 1.3 !important;
+  }
+
+  .announcement-time {
+    font-size: 0.85rem !important;
+  }
 }
 
 /* Landscape Mobile (max-height: 600px) and Small tablets */
@@ -519,6 +564,29 @@
     font-size: 0.65rem;
     white-space: nowrap;
   }
+
+  .announcement-badge {
+    font-size: 0.75rem !important;
+    padding: 0.4rem 0.8rem !important;
+    margin-bottom: 0.7rem !important;
+    letter-spacing: 1px !important;
+  }
+
+  .announcement-title {
+    font-size: 1rem !important;
+    margin-bottom: 0.5rem !important;
+  }
+
+  .announcement-content {
+    font-size: 0.9rem !important;
+    font-weight: 700 !important;
+    margin-bottom: 0.7rem !important;
+    line-height: 1.3 !important;
+  }
+
+  .announcement-time {
+    font-size: 0.85rem !important;
+  }
 }
 
 .wind-speed {
@@ -601,7 +669,8 @@
 }
 
 .current-event,
-.next-event {
+.next-event,
+.announcement-event {
   text-align: center;
   width: 100%;
   height: 100%;
@@ -778,6 +847,11 @@
     padding: 8px 12px;
   }
 
+  .hamburger-menu {
+    top: 20px;
+    right: 20px;
+  }
+
   .home-container h1 {
     font-size: 1.5rem;
     margin-bottom: 1.5rem;
@@ -838,7 +912,6 @@
   }
 }
 
-/* Fade in animation for carousel */
 @keyframes fadeIn {
   from {
     opacity: 0;
@@ -850,4 +923,72 @@
 
 .event-display.fade-in {
   animation: fadeIn 0.5s ease-in-out;
+}
+
+/* Announcement styles */
+.announcement-badge {
+  display: inline-block;
+  background: linear-gradient(135deg, #024338, #00d3af);
+  color: #e2faf6;
+  padding: 0.75rem 2rem;
+  border-radius: 24px;
+  font-size: 1.75rem;
+  font-weight: 700;
+  letter-spacing: 3px;
+  margin-bottom: 1.5rem;
+  text-transform: uppercase;
+}
+
+.announcement-title {
+  color: #212529;
+  font-size: 2.2rem;
+  font-weight: 600;
+  margin: 0 0 0.75rem 0;
+  font-family: 'Exo', inherit;
+}
+
+.announcement-content {
+  color: #212529;
+  font-size: 2rem;
+  font-weight: 1000;
+  line-height: 1.5;
+  max-width: 90%;
+  word-wrap: break-word;
+  margin-bottom: 1rem;
+  font-family: 'Exo', inherit;
+}
+
+.announcement-time {
+  color: #666;
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin: 0;
+}
+/* Mobile announcement responsive styles */
+@media (max-width: 600px) {
+  .announcement-badge {
+    font-size: 0.7rem;
+    padding: 0.35rem 0.7rem;
+    margin-bottom: 0.6rem;
+    letter-spacing: 1px;
+  }
+
+  .announcement-title {
+    font-size: 0.95rem;
+    margin-bottom: 0.4rem;
+    font-weight: 600;
+  }
+
+  .announcement-content {
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-bottom: 0.6rem;
+    max-width: 95%;
+    line-height: 1.3;
+  }
+
+  .announcement-time {
+    font-size: 0.8rem;
+    font-weight: 600;
+  }
 }

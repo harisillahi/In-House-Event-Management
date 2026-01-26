@@ -395,22 +395,38 @@ function Home() {
             
             return displayEvents.map((event) => (
               <div key={`${event.location}-${animationKey}-${event.id}`} className="event-display fade-in">
-                <div className={event.status === 'in_progress' ? 'current-event' : 'next-event'}>
-                  <div className={`event-status ${event.status === 'in_progress' ? 'in-progress' : event.status === 'completed' ? 'completed' : 'upcoming'}`}>
-                    {event.status === 'in_progress' ? 'LIVE NOW' : 
-                     event.status === 'completed' ? 'COMPLETED' :
-                     (event.status === 'scheduled' && new Date(event.start_time) > new Date() ? 'UP NEXT' : 'NOT STARTED YET')}
-                  </div>
-                  <h2>{event.title}</h2>
-                  {event.presenter && <p className="presenter">Presenter: {event.presenter}</p>}
-                  {event.location && <p className="location">Location: {event.location}</p>}
-                  {event.status === 'in_progress' && event.start_time && event.end_time && (
-                    <p className="time">
-                      {format(new Date(event.start_time), 'HH:mm')} - {format(new Date(event.end_time), 'HH:mm')}
-                    </p>
+                <div className={event.is_announcement ? 'announcement-event' : (event.status === 'in_progress' ? 'current-event' : 'next-event')}>
+                    {!event.is_announcement && (
+                    <div className={`event-status ${event.status === 'in_progress' ? 'in-progress' : event.status === 'completed' ? 'completed' : 'upcoming'}`}>
+                      {event.status === 'in_progress' ? 'LIVE NOW' : 
+                       event.status === 'completed' ? 'COMPLETED' :
+                       (event.status === 'scheduled' && new Date(event.start_time) > new Date() ? 'UP NEXT' : 'NOT STARTED YET')}
+                    </div>
                   )}
-                  {event.status === 'scheduled' && event.start_time && (
-                    <p className="countdown">{countdowns[event.id] || 'Calculating...'}</p>
+                  
+                  {event.is_announcement ? (
+                    <>
+                      <div className="announcement-badge">ANNOUNCEMENT</div>
+                      <p className="announcement-title">{event.title}</p>
+                      <div className="announcement-content">{event.notes}</div>
+                      <p className="announcement-time">
+                        {format(new Date(event.start_time), 'HH:mm')} - {format(new Date(event.end_time), 'HH:mm')}
+                      </p>
+                    </>
+                  ) : (
+                    <>
+                      <h2>{event.title}</h2>
+                      {event.presenter && <p className="presenter">Presenter: {event.presenter}</p>}
+                      {event.location && <p className="location">Location: {event.location}</p>}
+                      {event.status === 'in_progress' && event.start_time && event.end_time && (
+                        <p className="time">
+                          {format(new Date(event.start_time), 'HH:mm')} - {format(new Date(event.end_time), 'HH:mm')}
+                        </p>
+                      )}
+                      {event.status === 'scheduled' && event.start_time && (
+                        <p className="countdown">{countdowns[event.id] || 'Calculating...'}</p>
+                      )}
+                    </>
                   )}
                 </div>
               </div>

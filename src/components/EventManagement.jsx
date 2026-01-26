@@ -250,7 +250,8 @@ function EventManagement() {
       let eventData = {
         ...formData,
         cue_order: editingEvent ? editingEvent.cue_order : events.length + 1,
-        status: editingEvent ? editingEvent.status : 'scheduled'
+        status: editingEvent ? editingEvent.status : 'scheduled',
+        is_announcement: formData.notes?.trim() ? true : false // Mark as announcement if notes field is filled
       }
 
       if (formData.start_time && formData.duration) {

@@ -762,6 +762,12 @@
   font-family: 'Exo', inherit;
 }
 
+.optional {
+  color: #666;
+  font-size: 0.85rem;
+  font-weight: 400;
+}
+
 .modal-actions {
   display: flex;
   gap: 10px;
