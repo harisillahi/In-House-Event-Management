@@ -153,32 +153,6 @@ function Home() {
     }
   }, [events.length]) // Only re-run when the number of events changes, not on every update
 
-  const fetchEvents = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('events')
-        .select('*')
-        .order('cue_order', { ascending: true })
-      
-      if (error) throw error
-      
-      const now = new Date()
-      const fifteenMinutesFromNow = new Date(now.getTime() + 15 * 60000)
-      
-      // Filter: show in_progress events and upcoming events within 15 minutes
-      const visibleEvents = data?.filter(e => {
-        if (e.status === 'in_progress') return true
-        if (e.status === 'scheduled' && e.start_time) {
-          const startTime = new Date(e.start_time)
-          return startTime >= now && startTime <= fifteenMinutesFromNow
-        }
-        return false
-      }) || []
-      
-      // Group by location and get all visible events per location
-      const locationMap = new Map()
-      visibleEvents.forEach(event => {
-
   const fetchForumName = async () => {
     try {
       const { data, error } = await supabase
@@ -198,50 +172,6 @@ function Home() {
     }
   }
 
-  const fetchEvents = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('events')
-        .select('*')
-        .order('cue_order', { ascending: true })
-      
-      if (error) throw error
-      
-      const now = new Date()
-      const fifteenMinutesFromNow = new Date(now.getTime() + 15 * 60000)
-      
-      // Filter: show in_progress events and upcoming events within 15 minutes
-      const visibleEvents = data?.filter(e => {
-        if (e.status === 'in_progress') return true
-        if (e.status === 'scheduled' && e.start_time) {
-          const startTime = new Date(e.start_time)
-          return startTime >= now && startTime <= fifteenMinutesFromNow
-        }
-        return false
-      }) || []
-      
-      // Group by location and get all visible events per location
-      const locationMap = new Map()
-      visibleEvents.forEach(event => {
-        const location = event.location || 'No Location'
-        if (!locationMap.has(location)) {
-          locationMap.set(location, [])
-        }
-        locationMap.get(location).push(event)
-      })
-      
-      // Sort events within each location by cue_order and take them
-      const displayEvents = []
-      locationMap.forEach((locationEvents) => {
-        locationEvents.sort((a, b) => (a.cue_order || 0) - (b.cue_order || 0))
-        displayEvents.push(...locationEvents)
-      })
-      
-      setEvents(displayEvents)
-    } catch (error) {
-      console.error('Error fetching events:', error)
-    }
-  }
 
   const fetchWeather = async () => {
     try {
