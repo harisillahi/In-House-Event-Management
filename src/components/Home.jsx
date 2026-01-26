@@ -13,6 +13,7 @@ function Home() {
   const [animationKey, setAnimationKey] = useState(0)
   const [currentDateTime, setCurrentDateTime] = useState(new Date())
   const [weather, setWeather] = useState(null)
+  const [forumName, setForumName] = useState(localStorage.getItem('forumName') || 'EventFlow.io')
   const eventRef = useRef([])
   const carouselIntervalRef = useRef(null)
   const eventsByLocationRef = useRef({})
@@ -20,6 +21,7 @@ function Home() {
   useEffect(() => {
     fetchEvents()
     fetchWeather()
+    fetchForumName()
     
     // Polling mechanism - fetch every 5 seconds as fallback
     const pollInterval = setInterval(() => {
@@ -47,12 +49,25 @@ function Home() {
       )
       .subscribe()
 
+    // Real-time subscription for forum name changes
+    const settingsChannel = supabase
+      .channel('home_settings_realtime')
+      .on('postgres_changes',
+        { event: '*', schema: 'public', table: 'settings' },
+        (payload) => {
+          console.log('Home: Settings change received!', payload)
+          fetchForumName()
+        }
+      )
+      .subscribe()
+
     const interval = setInterval(() => {
       updateCountdowns()
     }, 1000)
 
     return () => {
       supabase.removeChannel(channel)
+      supabase.removeChannel(settingsChannel)
       clearInterval(interval)
       clearInterval(pollInterval)
       clearInterval(clockInterval)
@@ -137,6 +152,51 @@ function Home() {
       }
     }
   }, [events.length]) // Only re-run when the number of events changes, not on every update
+
+  const fetchEvents = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('events')
+        .select('*')
+        .order('cue_order', { ascending: true })
+      
+      if (error) throw error
+      
+      const now = new Date()
+      const fifteenMinutesFromNow = new Date(now.getTime() + 15 * 60000)
+      
+      // Filter: show in_progress events and upcoming events within 15 minutes
+      const visibleEvents = data?.filter(e => {
+        if (e.status === 'in_progress') return true
+        if (e.status === 'scheduled' && e.start_time) {
+          const startTime = new Date(e.start_time)
+          return startTime >= now && startTime <= fifteenMinutesFromNow
+        }
+        return false
+      }) || []
+      
+      // Group by location and get all visible events per location
+      const locationMap = new Map()
+      visibleEvents.forEach(event => {
+
+  const fetchForumName = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('settings')
+        .select('value')
+        .eq('key', 'forumName')
+        .single()
+
+      if (error && error.code !== 'PGRST116') throw error
+      
+      if (data) {
+        setForumName(data.value)
+        localStorage.setItem('forumName', data.value)
+      }
+    } catch (error) {
+      console.error('Error fetching forum name:', error)
+    }
+  }
 
   const fetchEvents = async () => {
     try {
@@ -343,7 +403,7 @@ function Home() {
       </div>
       
       <h1 className="event-title">
-        {localStorage.getItem('forumName') || 'camLine forum 2026'}
+        {forumName}
       </h1>
       
       <div className="datetime-weather-widget">
