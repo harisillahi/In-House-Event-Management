@@ -219,6 +219,60 @@
   font-family: 'Exo', inherit;
 }
 
+.settings-section {
+  padding: 2rem;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border: 1px solid #dee2e6;
+}
+
+.settings-section h3 {
+  margin-top: 0;
+  margin-bottom: 1.5rem;
+  color: #212529;
+  font-size: 1.25rem;
+  font-family: 'Exo', inherit;
+}
+
+.input-with-button {
+  display: flex;
+  gap: 0.75rem;
+  align-items: stretch;
+}
+
+.input-with-button .input {
+  flex: 1;
+  padding: 10px 15px;
+  border: 1px solid #dee2e6;
+  border-radius: 4px;
+  font-size: 1rem;
+}
+
+.input-with-button .btn {
+  padding: 10px 24px;
+  white-space: nowrap;
+}
+
+.message {
+  margin-top: 0.75rem;
+  padding: 0.75rem 1rem;
+  border-radius: 4px;
+  font-size: 0.95rem;
+  font-family: 'Exo', inherit;
+}
+
+.message.success {
+  background: #d4edda;
+  color: #155724;
+  border: 1px solid #c3e6cb;
+}
+
+.message.error {
+  background: #f8d7da;
+  color: #721c24;
+  border: 1px solid #f5c6cb;
+}
+
 @media (max-width: 768px) {
   .tabs {
     gap: 0;
@@ -284,5 +338,13 @@
 
   .settings-section .input {
     max-width: 100%;
+  }
+
+  .input-with-button {
+    flex-direction: column;
+  }
+
+  .input-with-button .btn {
+    width: 100%;
   }
 }

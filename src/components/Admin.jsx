@@ -13,6 +13,8 @@ function Admin() {
   const [filter, setFilter] = useState('all')
   const [forumName, setForumName] = useState(localStorage.getItem('forumName') || 'camLine forum 2026')
   const [currentTime, setCurrentTime] = useState(new Date())
+  const [forumNameSaving, setForumNameSaving] = useState(false)
+  const [saveMessage, setSaveMessage] = useState('')
 
   useEffect(() => {
     fetchData()
@@ -33,9 +35,23 @@ function Admin() {
       )
       .subscribe()
 
+    const settingsChannel = supabase
+      .channel('settings_changes')
+      .on('postgres_changes', 
+        { event: '*', schema: 'public', table: 'settings' },
+        (payload) => {
+          if (payload.new?.name === 'forumName') {
+            setForumName(payload.new.value)
+            localStorage.setItem('forumName', payload.new.value)
+          }
+        }
+      )
+      .subscribe()
+
     return () => {
       supabase.removeChannel(attendeesChannel)
       supabase.removeChannel(eventsChannel)
+      supabase.removeChannel(settingsChannel)
     }
   }, [])
 
@@ -69,7 +85,55 @@ function Admin() {
 
   const handleForumNameChange = (newName) => {
     setForumName(newName)
-    localStorage.setItem('forumName', newName)
+  }
+
+  const saveForumName = async () => {
+    if (!forumName.trim()) {
+      setSaveMessage('Please enter a forum name')
+      return
+    }
+
+    setForumNameSaving(true)
+    setSaveMessage('')
+
+    try {
+      // Try to update existing record
+      const { data: existing } = await supabase
+        .from('settings')
+        .select('id')
+        .eq('name', 'forumName')
+        .single()
+
+      let error
+
+      if (existing) {
+        // Update existing
+        const result = await supabase
+          .from('settings')
+          .update({ value: forumName, updated_at: new Date() })
+          .eq('name', 'forumName')
+        error = result.error
+      } else {
+        // Insert new
+        const result = await supabase
+          .from('settings')
+          .insert([{ name: 'forumName', value: forumName, created_at: new Date(), updated_at: new Date() }])
+        error = result.error
+      }
+
+      if (error) throw error
+
+      localStorage.setItem('forumName', forumName)
+      setSaveMessage('Forum name saved successfully!')
+      
+      // Clear message after 3 seconds
+      setTimeout(() => setSaveMessage(''), 3000)
+    } catch (error) {
+      console.error('Error saving forum name:', error)
+      setSaveMessage('Error saving forum name. Please try again.')
+    } finally {
+      setForumNameSaving(false)
+    }
   }
 
   // Attendees CSV Functions
@@ -504,15 +568,29 @@ function Admin() {
               <h3>Forum Settings</h3>
               <div className="form-group">
                 <label htmlFor="forum-name">Forum/Event Name</label>
-                <input
-                  type="text"
-                  id="forum-name"
-                  value={forumName}
-                  onChange={(e) => handleForumNameChange(e.target.value)}
-                  placeholder="Enter forum name"
-                  className="input"
-                />
+                <div className="input-with-button">
+                  <input
+                    type="text"
+                    id="forum-name"
+                    value={forumName}
+                    onChange={(e) => handleForumNameChange(e.target.value)}
+                    placeholder="Enter forum name"
+                    className="input"
+                  />
+                  <button 
+                    onClick={saveForumName} 
+                    disabled={forumNameSaving}
+                    className="btn btn-primary"
+                  >
+                    {forumNameSaving ? 'Saving...' : 'Save'}
+                  </button>
+                </div>
                 <p className="info-text">This name will appear in the top-left corner of the homepage</p>
+                {saveMessage && (
+                  <p className={`message ${saveMessage.includes('Error') ? 'error' : 'success'}`}>
+                    {saveMessage}
+                  </p>
+                )}
               </div>
             </div>
           </div>
