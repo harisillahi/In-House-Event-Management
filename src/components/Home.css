@@ -331,6 +331,16 @@
     max-width: 25%;
   }
 
+  .hamburger-menu {
+    top: 15px;
+    right: 40px;
+  }
+
+  .hamburger-btn {
+    font-size: 1.5rem;
+    padding: 6px 10px;
+  }
+
   .datetime-weather-widget {
     gap: 0;
     padding: 0.5rem 40px;
