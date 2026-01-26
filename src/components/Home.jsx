@@ -172,6 +172,33 @@ function Home() {
     }
   }
 
+  const fetchEvents = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('events')
+        .select('*')
+        .order('cue_order', { ascending: true })
+      
+      if (error) throw error
+      
+      const now = new Date()
+      const fifteenMinutesFromNow = new Date(now.getTime() + 15 * 60000)
+      
+      // Filter: show in_progress events and upcoming events within 15 minutes
+      const visibleEvents = data?.filter(e => {
+        if (e.status === 'in_progress') return true
+        if (e.status === 'scheduled' && e.start_time) {
+          const startTime = new Date(e.start_time)
+          return startTime >= now && startTime <= fifteenMinutesFromNow
+        }
+        return false
+      }) || []
+      
+      setEvents(visibleEvents)
+    } catch (error) {
+      console.error('Error fetching events:', error)
+    }
+  }
 
   const fetchWeather = async () => {
     try {
