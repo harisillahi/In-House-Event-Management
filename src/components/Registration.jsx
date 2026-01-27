@@ -357,13 +357,13 @@ function Registration() {
                           onClick={() => toggleCheckIn(attendee.id, attendee.checked_in)}
                           className={`btn-table ${attendee.checked_in ? 'btn-undo' : 'btn-checkin'}`}
                         >
-                          {attendee.checked_in ? <Undo size={24} /> : <UserCheck size={24}  />}
+                          {attendee.checked_in ? <Undo size={24} /> : <UserCheck size={24} filled/>}
                         </button>
                         <button
                           onClick={() => deleteAttendee(attendee.id)}
                           className="btn-table btn-delete"
                         >
-                          <TrashAlt size={24}  />
+                          <TrashAlt size={24} filled/>
                         </button>
                       </div>
                     </td>

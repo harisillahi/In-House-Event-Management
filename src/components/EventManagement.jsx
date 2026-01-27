@@ -805,26 +805,26 @@ function EventManagement() {
                       className={`btn-table ${event.status === 'in_progress' ? 'btn-stop' : 'btn-start'}`}
                       disabled={event.status === 'completed'}
                     >
-                      {event.status === 'in_progress' ? <StopCircle size={32} /> : <PlayCircle size={32} />}
+                      {event.status === 'in_progress' ? <StopCircle size={28} filled/> : <PlayCircle size={28} filled/>}
                     </button>
                     <button
                       onClick={() => setFocusedEvent(event)}
                       className="btn-table btn-focus"
                       disabled={event.status !== 'in_progress'}
                     >
-                      <Eye size={32}  />
+                      <Eye size={32} filled/>
                     </button>
                     <button
                       onClick={() => handleEdit(event)}
                       className="btn-table btn-edit"
                     >
-                      <Edit size={24}  />
+                      <Edit size={22} filled/>
                     </button>
                     <button
                       onClick={() => handleDelete(event.id)}
                       className="btn-table btn-delete"
                     >
-                      <TrashAlt size={32} />
+                      <TrashAlt size={28} filled/>
                     </button>
                   </div>
                 </div>
