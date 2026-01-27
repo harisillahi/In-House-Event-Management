@@ -26,10 +26,10 @@ A real-time web-based application for managing event registrations and event run
 
 The application has two password-protected sections:
 
-1. **Registration** (password: `registration123`)
+1. **Registration** (password: ``)
    - Manage attendees and check-ins
    
-2. **Event Management** (password: `event123`)
+2. **Event Management** (password: ``)
    - Manage event schedules and rundowns
 
 ## Setup Instructions
