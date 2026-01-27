@@ -2,8 +2,9 @@ import { useState, useEffect, useRef } from 'react'
 import { supabase } from '../supabaseClient'
 import { format } from 'date-fns'
 import { Html5Qrcode } from 'html5-qrcode'
-import '../App.css'
 import { Undo, TrashAlt, UserCheck, UserPlus, Barcode } from 'griddy-icons'
+import '../App.css'
+
 
 function Registration() {
   const [attendees, setAttendees] = useState([])

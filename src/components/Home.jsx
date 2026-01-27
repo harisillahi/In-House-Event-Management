@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../supabaseClient'
 import { format, differenceInSeconds } from 'date-fns'
-import { ListBulleted, Close, Edit, Lock, UserPlus } from 'griddy-icons'
+import { ListBulleted, Close, Edit, Lock, UserPlus, } from 'griddy-icons'
 import './Home.css'
 
 function Home() {
