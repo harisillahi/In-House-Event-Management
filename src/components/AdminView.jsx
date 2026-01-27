@@ -23,15 +23,23 @@ function AdminView() {
     fetchAttendees()
     
     const channel = supabase
-      .channel('attendees_changes')
+      .channel('admin_attendees_changes')
       .on('postgres_changes', 
         { event: '*', schema: 'public', table: 'attendees' },
         (payload) => {
-          console.log('Change received!', payload)
-          fetchAttendees()
+          console.log('Admin: Attendee change received!', payload)
+          // Debounce to batch multiple rapid changes
+          setTimeout(() => fetchAttendees(), 100)
         }
       )
-      .subscribe()
+      .subscribe((status) => {
+        console.log('Admin: Subscription status:', status)
+        if (status === 'SUBSCRIBED') {
+          console.log('✅ Admin: Successfully subscribed to realtime attendees')
+        } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+          console.error('❌ Admin: Subscription failed:', status)
+        }
+      })
 
     return () => {
       supabase.removeChannel(channel)

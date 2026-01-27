@@ -88,11 +88,19 @@ function EventManagement() {
       .on('postgres_changes', 
         { event: '*', schema: 'public', table: 'events' },
         (payload) => {
-          console.log('Event change received!', payload)
-          fetchEvents()
+          console.log('EventManagement: Event change received!', payload)
+          // Debounce to batch multiple rapid changes
+          setTimeout(() => fetchEvents(), 100)
         }
       )
-      .subscribe()
+      .subscribe((status) => {
+        console.log('EventManagement: Subscription status:', status)
+        if (status === 'SUBSCRIBED') {
+          console.log('✅ EventManagement: Successfully subscribed to realtime events')
+        } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+          console.error('❌ EventManagement: Subscription failed:', status)
+        }
+      })
 
     return () => {
       supabase.removeChannel(channel)

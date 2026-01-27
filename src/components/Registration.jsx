@@ -28,11 +28,19 @@ function Registration() {
       .on('postgres_changes', 
         { event: '*', schema: 'public', table: 'attendees' },
         (payload) => {
-          console.log('Change received!', payload)
-          fetchAttendees()
+          console.log('Registration: Attendee change received!', payload)
+          // Debounce to batch multiple rapid changes
+          setTimeout(() => fetchAttendees(), 100)
         }
       )
-      .subscribe()
+      .subscribe((status) => {
+        console.log('Registration: Subscription status:', status)
+        if (status === 'SUBSCRIBED') {
+          console.log('✅ Registration: Successfully subscribed to realtime attendees')
+        } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+          console.error('❌ Registration: Subscription failed:', status)
+        }
+      })
 
     return () => {
       supabase.removeChannel(channel)

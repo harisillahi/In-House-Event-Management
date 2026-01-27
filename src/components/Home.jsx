@@ -45,10 +45,17 @@ function Home() {
         { event: '*', schema: 'public', table: 'events' },
         (payload) => {
           console.log('Home: Event change received!', payload)
-          fetchEvents()
+          setTimeout(() => fetchEvents(), 100)
         }
       )
-      .subscribe()
+      .subscribe((status) => {
+        console.log('Home: Events subscription status:', status)
+        if (status === 'SUBSCRIBED') {
+          console.log('✅ Home: Successfully subscribed to realtime events')
+        } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+          console.error('❌ Home: Events subscription failed:', status)
+        }
+      })
 
     // Real-time subscription for forum name changes
     const settingsChannel = supabase
@@ -60,7 +67,12 @@ function Home() {
           fetchForumName()
         }
       )
-      .subscribe()
+      .subscribe((status) => {
+        console.log('Home: Settings subscription status:', status)
+        if (status === 'SUBSCRIBED') {
+          console.log('✅ Home: Successfully subscribed to realtime settings')
+        }
+      })
 
     const interval = setInterval(() => {
       updateCountdowns()
