@@ -3,6 +3,7 @@ import { supabase } from '../supabaseClient'
 import { format } from 'date-fns'
 import { Html5Qrcode } from 'html5-qrcode'
 import '../App.css'
+import { Undo, TrashAlt, UserCheck, UserPlus, Barcode } from 'griddy-icons'
 
 function Registration() {
   const [attendees, setAttendees] = useState([])
@@ -100,6 +101,20 @@ function Registration() {
 
   const toggleCheckIn = async (id, currentStatus) => {
     try {
+      // Optimistic update - update local state immediately
+      setAttendees(prevAttendees =>
+        prevAttendees.map(attendee =>
+          attendee.id === id
+            ? {
+                ...attendee,
+                checked_in: !currentStatus,
+                check_in_time: !currentStatus ? new Date().toISOString() : null
+              }
+            : attendee
+        )
+      )
+
+      // Update database
       const updates = {
         checked_in: !currentStatus,
         check_in_time: !currentStatus ? new Date().toISOString() : null
@@ -111,9 +126,11 @@ function Registration() {
         .eq('id', id)
 
       if (error) throw error
-      // fetchAttendees() will be called via real-time subscription
+      // Real-time subscription will sync any changes
     } catch (error) {
       console.error('Error updating check-in status:', error)
+      // Revert optimistic update on error
+      fetchAttendees()
     }
   }
 
@@ -263,10 +280,10 @@ function Registration() {
           <h2>Attendee List</h2>
           <div className="header-actions">
             <button onClick={() => setShowAddModal(true)} className="btn btn-scan">
-              ➕
+              <UserPlus size={24} filled/>
             </button>
             <button onClick={startQRScanner} className="btn btn-scan">
-              ⛶
+              <Barcode size={24} />
             </button>
           </div>
         </div>
@@ -340,13 +357,13 @@ function Registration() {
                           onClick={() => toggleCheckIn(attendee.id, attendee.checked_in)}
                           className={`btn-table ${attendee.checked_in ? 'btn-undo' : 'btn-checkin'}`}
                         >
-                          {attendee.checked_in ? 'Undo' : 'Check In'}
+                          {attendee.checked_in ? <Undo size={24} /> : <UserCheck size={24}  />}
                         </button>
                         <button
                           onClick={() => deleteAttendee(attendee.id)}
                           className="btn-table btn-delete"
                         >
-                          Delete
+                          <TrashAlt size={24}  />
                         </button>
                       </div>
                     </td>

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { supabase } from '../supabaseClient'
 import { format, differenceInSeconds } from 'date-fns'
 import './EventManagement.css'
+import { Edit, PlayCircle, StopCircle, TrashAlt, Eye } from 'griddy-icons'
 
 // Focus Timer Component
 function FocusTimer({ event, countdown }) {
@@ -262,6 +263,14 @@ function EventManagement() {
         
         eventData.start_time = startTime.toISOString()
         eventData.end_time = endTime.toISOString()
+        
+        // If editing a completed event with a new future start_time, reset status to scheduled
+        if (editingEvent && editingEvent.status === 'completed') {
+          const now = new Date()
+          if (startTime > now) {
+            eventData.status = 'scheduled'
+          }
+        }
       }
 
       if (editingEvent) {
@@ -787,35 +796,37 @@ function EventManagement() {
                 </div>
 
                 <div className="event-actions">
-                  <button
-                    onClick={() => handleStatusChange(
-                      event.id, 
-                      event.status === 'in_progress' ? 'completed' : 'in_progress'
-                    )}
-                    className={`btn-table ${event.status === 'in_progress' ? 'btn-stop' : 'btn-start'}`}
-                    disabled={event.status === 'completed'}
-                  >
-                    {event.status === 'in_progress' ? 'Stop' : 'Start'}
-                  </button>
-                  <button
-                    onClick={() => setFocusedEvent(event)}
-                    className="btn-table btn-focus"
-                    disabled={event.status !== 'in_progress'}
-                  >
-                    Focus
-                  </button>
-                  <button
-                    onClick={() => handleEdit(event)}
-                    className="btn-table btn-edit"
-                  >
-                    Edit
-                  </button>
-                  <button
-                    onClick={() => handleDelete(event.id)}
-                    className="btn-table btn-delete"
-                  >
-                    Delete
-                  </button>
+                  <div className="event-actions-buttons">
+                    <button
+                      onClick={() => handleStatusChange(
+                        event.id, 
+                        event.status === 'in_progress' ? 'completed' : 'in_progress'
+                      )}
+                      className={`btn-table ${event.status === 'in_progress' ? 'btn-stop' : 'btn-start'}`}
+                      disabled={event.status === 'completed'}
+                    >
+                      {event.status === 'in_progress' ? <StopCircle size={32} /> : <PlayCircle size={32} />}
+                    </button>
+                    <button
+                      onClick={() => setFocusedEvent(event)}
+                      className="btn-table btn-focus"
+                      disabled={event.status !== 'in_progress'}
+                    >
+                      <Eye size={32}  />
+                    </button>
+                    <button
+                      onClick={() => handleEdit(event)}
+                      className="btn-table btn-edit"
+                    >
+                      <Edit size={24}  />
+                    </button>
+                    <button
+                      onClick={() => handleDelete(event.id)}
+                      className="btn-table btn-delete"
+                    >
+                      <TrashAlt size={32} />
+                    </button>
+                  </div>
                 </div>
               </div>
             ))}

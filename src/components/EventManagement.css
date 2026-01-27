@@ -176,8 +176,9 @@
 
 .event-header {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-start;
   align-items: center;
+  gap: 1rem;
   margin-bottom: 0.75rem;
 }
 
@@ -186,6 +187,26 @@
   font-size: 1.25rem;
   color: #212529;
   font-family: 'Exo', inherit;
+}
+
+.event-status-actions {
+  display: none;
+}
+
+.event-actions-row {
+  display: none;
+}
+
+.event-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  align-items: stretch;
+}
+
+.event-actions .status-badge {
+  text-align: center;
+  width: 100%;
 }
 
 .status-badge {
@@ -264,8 +285,20 @@
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
-  align-items: stretch;
-  min-width: 200px;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.event-actions .status-badge {
+  display: none;
+}
+
+.event-actions-buttons {
+  display: flex;
+  flex-direction: row;
+  gap: 0.5rem;
+  flex-wrap: nowrap;
+  justify-content: flex-end;
 }
 
 .status-controls,
@@ -277,88 +310,89 @@
 }
 
 .btn-table {
-  padding: 0.45rem 0.75rem;
-  border: 1px solid #dee2e6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  padding: 0;
+  border: none;
   background: white;
-  border-radius: 4px;
+  border-radius: 6px;
   cursor: pointer;
   font-size: 0.656rem;
   font-family: 'Exo', sans-serif !important;
   transition: all 0.2s;
-  white-space: nowrap;
-  min-width: 64px;
 }
 
 .btn-start {
   background: #28a745;
   color: white;
   font-weight: bold;
-  border-color: #28a745;
 }
 
 .btn-start:hover:not(:disabled) {
-  background: #20c997;
-  border-color: #20c997;
+  background: #0c5c1f;
+}
+
+.btn-stop {
+  background: #dc3545;
+  color: white;
+  font-weight: bold;
+}
+
+.btn-stop:hover:not(:disabled) {
+  background: #6c131c;
 }
 
 .btn-complete {
   background: #007bff;
   color: white;
   font-weight: bold;
-  border-color: #007bff;
 }
 
 .btn-complete:hover:not(:disabled) {
   background: #0056b3;
-  border-color: #0056b3;
 }
 
 .btn-reset {
   background: #6c757d;
   color: white;
   font-weight: bold;
-  border-color: #6c757d;
 }
 
 .btn-reset:hover:not(:disabled) {
   background: #5a6268;
-  border-color: #5a6268;
 }
 
 .btn-edit {
-  background: #ffc107;
+  background: #1c3bb6;
   color: white;
   font-weight: bold;
-  border-color: #ffc107;
 }
 
 .btn-edit:hover {
-  background: #e0a800;
-  border-color: #e0a800;
+  background: #060a32;
 }
 
 .btn-delete {
   background: #dc3545;
   color: white;
   font-weight: bold;
-  border-color: #dc3545;
 }
 
-.btn-delete:hover {
-  background: #c82333;
-  border-color: #c82333;
+.btn-delete:hover:not(:disabled) {
+  background: #6c131c;
 }
 
 .btn-focus {
   background: #17a2b8;
   color: white;
   font-weight: bold;
-  border-color: #17a2b8;
 }
 
 .btn-focus:hover:not(:disabled) {
-  background: #138496;
-  border-color: #138496;
+  background: #0a444d;
 }
 
 .btn-table:disabled {

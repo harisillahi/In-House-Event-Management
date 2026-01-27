@@ -113,9 +113,11 @@
 }
 
 .hamburger-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   background: rgba(255, 255, 255, 0.9);
   border: none;
-  font-size: 2rem;
   padding: 10px 15px;
   border-radius: 8px;
   cursor: pointer;
@@ -154,7 +156,9 @@
 }
 
 .menu-item {
-  display: block;
+  display: flex;
+  align-items: center;
+  gap: 12px;
   width: 100%;
   padding: 12px 20px;
   border: none;
@@ -168,9 +172,18 @@
   color: #333;
 }
 
+.menu-item span {
+  flex: 1;
+}
+
 .menu-item:hover {
   background: linear-gradient(135deg, #00239D 0%, #00d3af 100%);
   color: white;
+}
+
+.menu-item:hover svg {
+  color: white;
+  stroke: white;
 }
 
 .menu-item:first-child {

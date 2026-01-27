@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../supabaseClient'
 import { format, differenceInSeconds } from 'date-fns'
+import { ListBulleted, Close, Edit, Lock, UserPlus } from 'griddy-icons'
 import './Home.css'
 
 function Home() {
@@ -324,7 +325,7 @@ function Home() {
       )}
       <div className="hamburger-menu">
         <button className="hamburger-btn" onClick={() => setMenuOpen(!menuOpen)}>
-          ☰
+          {menuOpen ? <Close size={32} /> : <ListBulleted size={32}  />}
         </button>
         {menuOpen && (
           <div className="menu-dropdown">
@@ -335,7 +336,8 @@ function Home() {
                 setMenuOpen(false)
               }}
             >
-              Registration
+              <UserPlus size={20} />
+              <span>Registration</span>
             </button>
             <button 
               className="menu-item"
@@ -344,7 +346,8 @@ function Home() {
                 setMenuOpen(false)
               }}
             >
-              Event Management
+              <Edit size={20} />
+              <span>Event Management</span>
             </button>
             <button 
               className="menu-item"
@@ -353,7 +356,8 @@ function Home() {
                 setMenuOpen(false)
               }}
             >
-              Admin
+              <Lock size={20} />
+              <span>Admin</span>
             </button>
           </div>
         )}
