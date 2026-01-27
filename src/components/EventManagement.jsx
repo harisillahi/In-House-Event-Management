@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { supabase } from '../supabaseClient'
 import { format, differenceInSeconds } from 'date-fns'
 import './EventManagement.css'
-import { Edit, PlayCircle, StopCircle, TrashAlt, Eye } from 'griddy-icons'
+import { Edit, PlayCircle, StopCircle, TrashAlt, Eye, ChevronDown, ChevronUp } from 'griddy-icons'
 
 // Focus Timer Component
 function FocusTimer({ event, countdown }) {
@@ -65,6 +65,7 @@ function EventManagement() {
   const [focusedEvent, setFocusedEvent] = useState(null)
   const [activeLocation, setActiveLocation] = useState('all')
   const [deleteConfirmation, setDeleteConfirmation] = useState(null)
+  const [expandedEvents, setExpandedEvents] = useState({})
   
   // Form states
   const [formData, setFormData] = useState({
@@ -349,6 +350,13 @@ function EventManagement() {
       fetchEvents()
       setDeleteConfirmation(null)
     }
+  }
+
+  const toggleEventExpand = (eventId) => {
+    setExpandedEvents(prev => ({
+      ...prev,
+      [eventId]: !prev[eventId]
+    }))
   }
 
   const handleStatusChange = async (id, newStatus) => {
@@ -758,40 +766,51 @@ function EventManagement() {
 
                 <div className="event-content">
                   <div className="event-header">
-                    <h3>{event.title}</h3>
-                    <span className={`status-badge status-${event.status}`}>
-                      {event.status === 'scheduled' && 'Scheduled'}
-                      {event.status === 'in_progress' && 'In Progress'}
-                      {event.status === 'completed' && 'Completed'}
-                      {event.status === 'cancelled' && 'Cancelled'}
-                    </span>
+                    <div className="event-header-main">
+                      <h3>{event.title}</h3>
+                      <span className={`status-badge status-${event.status}`}>
+                        {event.status === 'scheduled' && 'Scheduled'}
+                        {event.status === 'in_progress' && 'In Progress'}
+                        {event.status === 'completed' && 'Completed'}
+                        {event.status === 'cancelled' && 'Cancelled'}
+                      </span>
+                    </div>
+                    <button 
+                      className="btn-expand-mobile"
+                      onClick={() => toggleEventExpand(event.id)}
+                      aria-label={expandedEvents[event.id] ? "Collapse" : "Expand"}
+                    >
+                      {expandedEvents[event.id] ? <ChevronUp size={24} /> : <ChevronDown size={24} />}
+                    </button>
                   </div>
 
-                  {event.description && (
-                    <p className="event-description">{event.description}</p>
-                  )}
+                  <div className={`event-details-collapsible ${expandedEvents[event.id] ? 'expanded' : ''}`}>
+                    {event.description && (
+                      <p className="event-description">{event.description}</p>
+                    )}
 
-                  <div className="event-details">
-                    <div className="event-time">
-                      <strong>Start:</strong> {format(new Date(event.start_time), 'MMM dd, yyyy HH:mm')}
-                      <span className="separator">→</span>
-                      <strong>End:</strong> {format(new Date(event.end_time), 'MMM dd, yyyy HH:mm')}
+                    <div className="event-details">
+                      <div className="event-time">
+                        <strong>Start:</strong> {format(new Date(event.start_time), 'MMM dd, yyyy HH:mm')}
+                        <span className="separator">→</span>
+                        <strong>End:</strong> {format(new Date(event.end_time), 'MMM dd, yyyy HH:mm')}
+                      </div>
+                      {event.status === 'in_progress' && (
+                        <div className="event-countdown">
+                          <strong>Time Remaining:</strong> {countdowns[event.id] || '00h 00m 00s'}
+                        </div>
+                      )}
+                      {event.presenter && (
+                        <div className="event-meta">
+                          <strong>Presenter:</strong> {event.presenter}
+                        </div>
+                      )}
+                      {event.location && (
+                        <div className="event-meta">
+                          <strong>Location:</strong> {event.location}
+                        </div>
+                      )}
                     </div>
-                    {event.status === 'in_progress' && (
-                      <div className="event-countdown">
-                        <strong>Time Remaining:</strong> {countdowns[event.id] || '00h 00m 00s'}
-                      </div>
-                    )}
-                    {event.presenter && (
-                      <div className="event-meta">
-                        <strong>Presenter:</strong> {event.presenter}
-                      </div>
-                    )}
-                    {event.location && (
-                      <div className="event-meta">
-                        <strong>Location:</strong> {event.location}
-                      </div>
-                    )}
                   </div>
                 </div>
 
