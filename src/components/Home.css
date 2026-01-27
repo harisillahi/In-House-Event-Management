@@ -303,6 +303,19 @@
 @media (max-width: 1024px) {
   .home-container {
     min-height: auto;
+    padding: 20px;
+  }
+
+  .home-container .event-title {
+    font-size: 1.8rem;
+    top: 20px;
+    left: 20px;
+    max-width: 60%;
+  }
+
+  .hamburger-menu {
+    top: 20px;
+    right: 20px;
   }
 
   .datetime-weather-widget {
@@ -360,6 +373,76 @@
 
   .announcement-time {
     font-size: 1.2rem;
+  }
+}
+
+/* Large Portrait Tablets including iPad Pro (600px - 1024px) */
+@media (max-width: 1024px) and (orientation: portrait) {
+  .home-container {
+    padding: 60px 15px 15px 15px;
+  }
+
+  .home-container .event-title {
+    font-size: 1.5rem;
+    top: 20px;
+    left: 15px;
+    max-width: 55%;
+  }
+
+  .hamburger-menu {
+    top: 20px;
+    right: 15px;
+  }
+
+  .datetime-weather-widget {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+    padding: 0.5rem 0 1rem 0;
+    margin-bottom: 30px !important;
+    margin-top: 60px;
+  }
+
+  .datetime-section {
+    gap: 1.5rem;
+    width: 100%;
+  }
+
+  .day {
+    font-size: 1rem;
+  }
+
+  .date {
+    font-size: 0.875rem;
+  }
+
+  .clock {
+    font-size: 2.5rem;
+  }
+
+  .weather-section {
+    gap: 1.25rem;
+    padding-left: 0;
+    border-left: none;
+    border-top: 2px solid rgba(255, 255, 255, 0.3);
+    padding-top: 1rem;
+    width: 100%;
+  }
+
+  .temperature {
+    font-size: 2.2rem;
+  }
+
+  .weather-code {
+    font-size: 1rem;
+  }
+
+  .wind-speed {
+    font-size: 0.85rem;
+  }
+
+  .events-container {
+    padding: 0 0 20px 0;
   }
 }
 
