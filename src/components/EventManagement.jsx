@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { supabase } from '../supabaseClient'
 import { format, differenceInSeconds } from 'date-fns'
 import './EventManagement.css'
-import { Edit, PlayCircle, StopCircle, TrashAlt, Eye, ChevronDown, ChevronUp } from 'griddy-icons'
+import { Edit, PlayCircle, StopCircle, TrashAlt, Alarm, ChevronDown, ChevronUp } from 'griddy-icons'
 
 // Focus Timer Component
 function FocusTimer({ event, countdown }) {
@@ -839,7 +839,7 @@ function EventManagement() {
                       className="btn-table btn-focus"
                       disabled={event.status !== 'in_progress'}
                     >
-                      <Eye size={32} filled/>
+                      <Alarm size={28} filled/>
                     </button>
                     <button
                       onClick={() => handleEdit(event)}
